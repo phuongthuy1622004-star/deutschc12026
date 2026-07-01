@@ -42,28 +42,33 @@
   user-select: none;
 }
 
-html, body {
+html {
+  /* JS sets --real-vh = window.innerHeight * 0.01 in <head> before CSS renders */
+  height: calc(var(--real-vh, 1vh) * 100);
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
   margin: 0;
   padding: 0;
   overflow: hidden;
   width: 100%;
   height: 100%;
-}
-
-body {
   font-family: 'Outfit', 'Inter', sans-serif;
   background-color: #121212;
   color: var(--text-primary);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Don't center — let app-container fill from top */
 }
 
 #app-container {
   width: 100%;
   max-width: 480px;
-  /* JS injects --real-vh = window.innerHeight * 0.01 to fix iOS PWA height */
-  height: calc(var(--real-vh, 1vh) * 100);
+  height: 100%; /* 100% of body which is 100% of html which uses --real-vh */
   background-color: var(--bg-color);
   position: relative;
   display: flex;
@@ -73,6 +78,10 @@ body {
 }
 
 @media (min-width: 481px) {
+  body {
+    align-items: center; /* Center on desktop */
+    background-color: #121212;
+  }
   #app-container {
     height: 92vh;
     border-radius: 40px;
@@ -98,7 +107,7 @@ main {
   flex: 1;
   overflow: hidden;
   position: relative;
-  min-height: 0; /* critical for flex children to shrink properly */
+  min-height: 0;
 }
 
 .page {
@@ -116,8 +125,9 @@ main {
   pointer-events: none;
   transform: translateY(15px);
   transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
+  overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-sizing: border-box;
 }
 
