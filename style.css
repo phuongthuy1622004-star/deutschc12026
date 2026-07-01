@@ -48,6 +48,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  position: fixed;
 }
 
 body {
@@ -57,16 +58,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100%;
-  min-height: -webkit-fill-available;
 }
 
 #app-container {
   width: 100%;
   max-width: 480px;
   height: 100%;
-  height: -webkit-fill-available;
-  height: 100dvh;
   background-color: var(--bg-color);
   position: relative;
   display: flex;
