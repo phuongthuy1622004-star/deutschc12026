@@ -94,7 +94,7 @@ body {
 }
 
 .safe-padding-top {
-  padding-top: max(20px, var(--safe-top));
+  padding-top: calc(16px + var(--safe-top));
 }
 
 .safe-padding-bottom {
@@ -117,7 +117,7 @@ main {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  padding-top: max(20px, var(--safe-top));
+  padding-top: calc(16px + var(--safe-top));
   padding-bottom: 20px;
   opacity: 0;
   pointer-events: none;
@@ -162,7 +162,7 @@ h2 {
 #bottom-nav {
   position: relative;
   width: 100%;
-  height: calc(64px + var(--safe-bottom));
+  height: calc(50px + var(--safe-bottom));
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1357,7 +1357,7 @@ h2 {
 .topic-dashboard-scroll {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 56px; /* 56px pagination */
+  padding-bottom: 66px; /* Space to clear floating footer (46px height + 8px bottom + 12px margin) */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1460,21 +1460,22 @@ h2 {
 }
 
 .topic-dashboard-footer {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 56px !important;
-  padding-bottom: 8px !important;
+  position: absolute;
+  bottom: 8px; /* Float 8px above bottom nav */
+  left: 12px;
+  right: 12px;
+  height: 46px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px !important;
+  padding: 0 16px;
   z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 /* -------------------------------------------------------------
