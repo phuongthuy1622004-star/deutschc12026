@@ -48,7 +48,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #121212;
+  background-color: var(--bg-color); /* Match app background */
 }
 
 body {
@@ -56,11 +56,10 @@ body {
   color: var(--text-primary);
 }
 
-/* position:fixed + top/bottom/left/right = anchors to actual viewport edges.
-   This is the ONLY reliable way to avoid iOS PWA bottom-gap issues.
-   No vh calculations, no --real-vh, no JS height tricks needed. */
+/* position:absolute + top/bottom/left/right ensures iOS WebKit stretches it
+   correctly to match the window container boundaries. */
 #app-container {
-  position: fixed;
+  position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
@@ -124,9 +123,7 @@ main {
   pointer-events: none;
   transform: translateY(15px);
   transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: scroll;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
