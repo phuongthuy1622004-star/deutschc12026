@@ -1,3 +1,20 @@
+// ============================================================
+// iOS PWA VIEWPORT HEIGHT FIX
+// On iOS Standalone mode, 100vh includes the status bar.
+// We measure window.innerHeight which gives the TRUE visible
+// height, and set it as a CSS custom property --real-vh.
+// Usage in CSS: height: calc(var(--real-vh, 1vh) * 100);
+// ============================================================
+function setRealVH() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--real-vh', `${vh}px`);
+}
+setRealVH();
+window.addEventListener('resize', setRealVH);
+window.addEventListener('orientationchange', function() {
+  setTimeout(setRealVH, 300); // wait for browser chrome to settle
+});
+
 // GLOBAL ERROR HANDLER FOR EASY PWA DEBUGGING ON MOBILE
 window.onerror = function(message, source, lineno, colno, error) {
   alert(`Error: ${message}\nLine: ${lineno}\nSource: ${source}`);

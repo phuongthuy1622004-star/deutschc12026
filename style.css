@@ -43,12 +43,11 @@
 }
 
 html, body {
-  height: 100%;
-  width: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
 body {
@@ -61,15 +60,12 @@ body {
 }
 
 #app-container {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
   width: 100%;
   max-width: 480px;
-  margin: 0 auto;
+  /* JS injects --real-vh = window.innerHeight * 0.01 to fix iOS PWA height */
+  height: calc(var(--real-vh, 1vh) * 100);
   background-color: var(--bg-color);
+  position: relative;
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
@@ -78,11 +74,6 @@ body {
 
 @media (min-width: 481px) {
   #app-container {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
     height: 92vh;
     border-radius: 40px;
     border: 8px solid #2B2D42;
@@ -91,7 +82,7 @@ body {
 
 @media (max-width: 480px) {
   body {
-    background-color: var(--bg-color); /* Match app background color to eliminate black bar gaps */
+    background-color: var(--bg-color);
   }
 }
 
@@ -107,6 +98,7 @@ main {
   flex: 1;
   overflow: hidden;
   position: relative;
+  min-height: 0; /* critical for flex children to shrink properly */
 }
 
 .page {
@@ -124,7 +116,7 @@ main {
   pointer-events: none;
   transform: translateY(15px);
   transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: scroll;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
