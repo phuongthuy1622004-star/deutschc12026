@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DeutschC1 - Learn German</title>
+  
+  <!-- PWA iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DeutschC1">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Theme Color for browsers -->
+  <meta name="theme-color" content="#E05A47">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Firebase SDK Compat via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- MAIN INTERACTIVE ROUTER -->
+    <main>
+      
+      <!-- 1. TAB VOCABULARY PAGE -->
+      <section id="vocab-page" class="page active safe-padding-top safe-padding-bottom">
+        <div class="header-row">
+          <div>
+            <h1>Vocabulary</h1>
+            <div class="subtitle" id="autoplay-status-label">Personalized German learning</div>
+          </div>
+        </div>
+        
+        
+        <!-- User Activity & Spaced Repetition Stats Dashboard Grid -->
+        <div class="user-stats-dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          
+
+          <!-- Box 3: Streak -->
+          <div id="dashboard-streak-box" style="background: #FFF9F2; border: 1px solid #FFE8D1; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; min-height: 80px; box-shadow: var(--shadow-sm); cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #D97706;">
+              <span style="font-size: 14px;">🔥</span> Streak
+            </div>
+            <div>
+              <span id="dashboard-streak-count" style="font-size: 24px; font-weight: 800; color: #B45309;">0</span>
+              <span style="font-size: 12px; font-weight: 700; color: #B45309; margin-left: 2px;">days</span>
+            </div>
+            <div id="dashboard-streak-missed" style="font-size: 10px; color: #92400E; font-weight: 600; margin-top: 2px; display: none;">Missed: 0 days</div>
+          </div>
+          
+          <!-- Box 4: Hôm nay (Study Time) -->
+          <div style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; min-height: 80px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #15803D;">
+              <span style="font-size: 14px;">🕒</span> Today
+            </div>
+            <div>
+              <span id="dashboard-study-time" style="font-size: 24px; font-weight: 800; color: #166534;">0</span>
+              <span style="font-size: 12px; font-weight: 700; color: #166534; margin-left: 2px;" id="dashboard-study-unit">seconds</span>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Daily Task Section -->
+        <div id="daily-task-section" style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">📅</span>
+              <div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Today's Task</div>
+                <div style="font-size: 11px; color: var(--text-secondary);" id="daily-task-date">Loading...</div>
+              </div>
+            </div>
+            <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">In Progress</span>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+              <span>Progress</span>
+              <strong id="daily-task-progress-text" style="color: var(--text-primary);">0 / 0 cards</strong>
+            </div>
+            <!-- Progress Bar -->
+            <div style="width: 100%; height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
+              <div id="daily-task-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #E05A47, #F59E0B); border-radius: 4px; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+          
+          <!-- Breakdown Info -->
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); background: #F8FAFC; border-radius: 10px; padding: 8px 12px;">
+            <span>New: <strong id="daily-task-new-count" style="color: #475569;">0</strong></span>
+            <span>Learning: <strong id="daily-task-learning-count" style="color: #D97706;">0</strong></span>
+            <span>Review: <strong id="daily-task-review-count" style="color: #10B981;">0</strong></span>
+          </div>
+          
+          <button class="btn-primary" id="btn-start-daily-task" style="width: 100%; margin: 0; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            🚀 Start Learning
+          </button>
+        </div>
+
+        <!-- Stats Dashboard (Clickable links to status lists) -->
+        <div class="stats-container">
+          <div class="stat-box all">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-box remembered">
+            <div class="stat-value" id="stat-remembered">0</div>
+            <div class="stat-label">Remembered</div>
+          </div>
+          <div class="stat-box learning">
+            <div class="stat-value" id="stat-learning">0</div>
+            <div class="stat-label">Learning</div>
+          </div>
+          <div class="stat-box unlearned">
+            <div class="stat-value" id="stat-unlearned">0</div>
+            <div class="stat-label">Unlearned</div>
+          </div>
+        </div>
+        
+        <!-- Main Search Bar (Search in all decks) -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <input type="text" id="main-vocab-search" class="form-input" placeholder="🔍 Search German or English words across all decks..." style="border-radius: 12px; font-size: 14px; height: 44px; padding: 0 16px;">
+        </div>
+        
+        <!-- Main Search Results Container -->
+        <div id="main-search-results-section" style="display: none; margin-bottom: 20px;">
+          <h2 id="main-search-results-title">Search Results</h2>
+          <div id="main-search-results-container">
+            <!-- Injected search cards -->
+          </div>
+        </div>
+        
+        <!-- Decks Section (Hidden during active search) -->
+        <div id="decks-section">
+          <h2>Study Decks</h2>
+          <!-- Topics list -->
+          <div class="topics-grid" id="topics-grid">
+            <!-- Rendered dynamically in app.js -->
+          </div>
+        </div>
+      </section>
+      
+      <!-- 2. TAB GRAMMAR SECTION (EMBEDDED GRAMMAR EXERCISES) -->
+      <section id="grammar-page" class="page safe-padding-top safe-padding-bottom" style="padding: 0; overflow: hidden;">
+        <div style="padding: 16px 20px 8px 20px; border-bottom: 1px solid var(--border-color); background: white; display: flex; flex-direction: column; gap: 10px; margin-bottom: 0;">
+          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">Grammar Exercises</div>
+          <div class="segment-control grammar-selector" style="width: 100%;">
+            <button type="button" class="segment-btn active" data-url="https://german.net/exercises/" style="flex: 1;">German.net</button>
+            <button type="button" class="segment-btn" data-url="https://www.germancenter-st.com/bai-tap-tieng-duc-online-trinh-do-a1" style="flex: 1;">German Center ST</button>
+          </div>
+        </div>
+        <div style="flex: 1; width: 100%; height: 100%; overflow: hidden; position: relative;">
+          <iframe 
+            id="grammar-iframe"
+            src="https://german.net/exercises/" 
+            style="width: 100%; height: 100%; border: none; display: block;"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            referrerpolicy="no-referrer"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </section>
+      
+      <!-- 3. TAB LESSON SECTION (EMBEDDED DW LEARN GERMAN) -->
+      <section id="lesson-page" class="page safe-padding-top safe-padding-bottom" style="padding: 0; overflow: hidden;">
+        <div class="back-header" style="padding: 16px 20px 8px 20px; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div class="back-title" style="margin-left: 0; font-size: 20px; font-weight: 800; color: var(--text-primary);">DW Learn German</div>
+          <a href="https://learngerman.dw.com/en/learn-german/s-9528" target="_blank" rel="noopener noreferrer" class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 12px; width: auto; border-radius: 8px; display: flex; align-items: center; gap: 4px; text-decoration: none;">
+            <span>🌐</span> Mở trình duyệt
+          </a>
+        </div>
+        <div style="flex: 1; width: 100%; height: 100%; overflow: hidden; position: relative;">
+          <iframe 
+            src="https://learngerman.dw.com/en/learn-german/s-9528" 
+            style="width: 100%; height: 100%; border: none; display: block;"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            referrerpolicy="no-referrer"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </section>
+      
+      <!-- 4. TAB TEST PLACEHOLDER -->
+      <section id="test-page" class="page safe-padding-top safe-padding-bottom">
+        <h1>Tests</h1>
+        <div class="coming-soon-container">
+          <div class="coming-soon-icon">⏱️</div>
+          <div class="coming-soon-text">
+            <strong>Practice Exams</strong><br>
+            Under construction. Goethe/Telc C1 mock tests and timed exam simulators will be available here.
+          </div>
+        </div>
+      </section>
+      
+      <!-- 5. UNIFIED WORD EXPLORER PAGE (PAGINATED WORDS LIST WITH TOP BUTTONS) -->
+      <section id="topic-dashboard-page" class="page safe-padding-top safe-padding-bottom" style="padding-bottom: 0;">
+        
+        <!-- Header container matching screenshot layout perfectly -->
+        <div class="topic-header-container" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
+          <div class="topic-header-row" style="display: flex; align-items: flex-start; gap: 10px;">
+            <button class="back-btn" data-back-to="vocab-page" style="padding: 4px 0; margin-top: 2px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div style="display: flex; flex-direction: column;">
+              <div class="topic-header-title" id="topic-title-dashboard" style="font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2;">Topic Deck</div>
+              <div class="topic-header-count" id="topic-desc-dashboard" style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">0 words</div>
+            </div>
+          </div>
+          
+          <!-- Passive & Active buttons row with icons -->
+          <div class="topic-actions-row" style="display: flex; gap: 14px; width: 100%;">
+            <button class="btn-primary" id="btn-passive-direct" style="flex: 1; margin: 0; height: 44px; border-radius: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>🎧</span> Passive
+            </button>
+            <button class="btn-primary" id="btn-active-menu" style="flex: 1; margin: 0; height: 44px; border-radius: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; background: white; color: var(--primary); border: 2px solid var(--primary);">
+              <span>⚡</span> Active
+            </button>
+          </div>
+        </div>
+        
+        <!-- Word List Scroll Area -->
+        <div class="topic-dashboard-scroll" id="topic-words-container">
+          <!-- Injected dynamically in app.js -->
+        </div>
+        
+        <!-- Sticky Bottom Footer (Pagination controls) -->
+        <div class="topic-dashboard-footer" style="height: calc(56px + var(--safe-bottom)); padding-bottom: calc(8px + var(--safe-bottom));">
+          <div class="pagination-container" id="topic-pagination-container">
+            <!-- Paging numbers injected here dynamically -->
+          </div>
+        </div>
+      </section>
+      
+      <!-- 6. PASSIVE STUDY SCREEN -->
+      <section id="passive-study-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="passive-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title" id="passive-topic-title">Học Thụ Động</div>
+        </div>
+        
+        <!-- Progress bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary);">
+          <span>Tiến độ tự động</span>
+          <span id="passive-progress-text">1 / 1</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="passive-progress-fill"></div>
+        </div>
+        
+        <!-- 3D Flashcard -->
+        <div class="flashcard-wrapper">
+          <div class="flashcard" id="passive-flashcard">
+            <div class="flashcard-inner">
+              
+              <!-- Front Face (German) -->
+              <div class="flashcard-front">
+                <div id="passive-image-container" style="width: 100%;"></div>
+                <div class="word-display" id="passive-word-de">Deutsch <button class="audio-btn">🔊</button></div>
+                <div class="word-ipa" id="passive-ipa-de">[doitʃ]</div>
+                <div class="word-sentence" id="passive-sentence-de">Deutsch lernen macht Spaß.</div>
+                <div class="flip-tip">🔄 Chạm để lật và xem bản dịch</div>
+              </div>
+              
+              <!-- Back Face (English) -->
+              <div class="flashcard-back">
+                <div class="word-meaning" id="passive-meaning-vi">German</div>
+                <div class="word-sentence-meaning" id="passive-sentence-vi">Learning German is fun.</div>
+                
+                <!-- Word Family & Notes Placeholders -->
+                <div id="passive-family-container" style="width: 100%;"></div>
+                <div id="passive-note-container" style="width: 100%;"></div>
+                
+                <div class="flip-tip">🔄 Chạm để lật và xem từ tiếng Đức</div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+        
+        <!-- Passive Autoplay Playbacks Control -->
+        <div class="passive-controls">
+          <button class="control-btn" id="btn-passive-prev">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+          </button>
+          <button class="control-btn play" id="btn-passive-play">
+            <!-- Icon replaced via app.js -->
+          </button>
+          <button class="control-btn" id="btn-passive-next">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
+        </div>
+        
+        <!-- Status check & Configuration rows -->
+        <div class="status-badge-container">
+          <button class="status-toggle-btn" id="passive-status-badge">⏳ Unlearned</button>
+        </div>
+        
+        <div class="settings-trigger-row">
+          <button class="settings-trigger-btn" id="btn-passive-settings">
+            ⚙️ Cài đặt tự động
+          </button>
+        </div>
+      </section>
+      
+      <!-- 7. ACTIVE VUỐT THẺ (SWIPING) SCREEN -->
+      <section id="active-study-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="active-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Học Chủ Động</div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); margin-bottom: 4px;">
+          <span>Vuốt tương tác thẻ</span>
+          <span id="active-progress-text">0 / 0</span>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom: 12px;">
+          <div class="progress-bar-fill" id="active-progress-fill"></div>
+        </div>
+        
+        <!-- Swipe stack container -->
+        <div class="swipe-container" id="active-swipe-container">
+          <!-- Stack loaded dynamically in app.js -->
+        </div>
+        
+        <!-- Instructions -->
+        <div class="swipe-instructions">
+          <div class="swipe-instruction-box left">
+            <div class="swipe-instruction-direction">← TRÁI</div>
+            <div class="swipe-instruction-label">Chưa thuộc</div>
+          </div>
+          <div class="swipe-instruction-box up">
+            <div class="swipe-instruction-direction">↑ LÊN</div>
+            <div class="swipe-instruction-label">Đang học</div>
+          </div>
+          <div class="swipe-instruction-box right">
+            <div class="swipe-instruction-direction">PHẢI →</div>
+            <div class="swipe-instruction-label">Đã nhớ</div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 8. GAME 1: MATCHING GAME SCREEN -->
+      <section id="matching-game-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="match-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Word Match</div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+          <span id="match-progress-text" style="font-size:13px; font-weight:600;">0 / 5 matched</span>
+          <span id="match-xp-display" class="sprint-score-box">0 XP</span>
+        </div>
+        
+        <div id="matching-board-container" class="matching-game">
+          <!-- Matching elements injected here -->
+        </div>
+      </section>
+      
+      <!-- 9. GAME 2: LISTENING PRACTICE SCREEN -->
+      <section id="listening-game-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="listening-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Listening Practice</div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary);">
+          <span>Listen to the German word</span>
+          <span id="listening-progress-text">1 / 10 questions</span>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom: 20px;">
+          <div class="progress-bar-fill" id="listening-progress-fill"></div>
+        </div>
+        
+        <div id="listening-game-container">
+          <div class="listening-question-box">
+            <button class="audio-btn" id="btn-listening-replay" style="font-size: 26px;">🔊</button>
+            <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Tap to play audio again</span>
+          </div>
+          
+          <div class="options-list" id="listening-options-list">
+            <!-- 4 options buttons -->
+          </div>
+          
+          <div class="listening-reveal-box" id="listening-reveal-box">
+            <div id="listening-word-reveal" style="font-size:18px; font-weight:700; color:var(--text-primary);"></div>
+            <div id="listening-sentence-reveal" style="font-size:14px; color:var(--text-secondary); font-style:italic;"></div>
+            <button class="btn-next-question" id="btn-listening-next">Next →</button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 10. GAME 3: WORD SPRINT SCREEN -->
+      <section id="sprint-game-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="sprint-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Word Sprint</div>
+        </div>
+        
+        <div class="sprint-header">
+          <div class="sprint-score-box">⚡ <span id="sprint-score-val">0</span> Points</div>
+          <div style="font-weight:700; color:var(--primary); font-size:18px;" id="sprint-time-text">60s</div>
+          <div class="sprint-combo-box" id="sprint-combo-val">Combo x1</div>
+        </div>
+        
+        <div class="sprint-timer-bar">
+          <div class="sprint-timer-fill" id="sprint-timer-fill"></div>
+        </div>
+        
+        <div id="sprint-game-container">
+          <div class="listening-question-box" style="margin-bottom: 24px;">
+            <div class="subtitle" style="text-transform:uppercase; font-size:11px; letter-spacing:1px;">German Word</div>
+            <div id="sprint-word-de" style="font-size: 28px; font-weight: 800; color: var(--text-primary);">der Sohn</div>
+          </div>
+          
+          <div class="options-list" id="sprint-options-grid">
+            <!-- Sprint buttons -->
+          </div>
+        </div>
+      </section>
+      
+      <!-- 11. GAME 4: SENTENCE FILL-IN SCREEN -->
+      <section id="fill-blank-game-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="fillblank-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Sentence Fill-in</div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary);">
+          <span>FILL IN THE BLANK</span>
+          <span id="fillblank-progress-text">1 / 10 questions</span>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom: 20px;">
+          <div class="progress-bar-fill" id="fillblank-progress-fill"></div>
+        </div>
+        
+        <div id="fillblank-game-container">
+          
+          <div class="listening-question-box" style="margin-bottom: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; border-radius: var(--border-radius-md); background: white; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
+            <div id="fillblank-sentence-de" style="font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.5; margin-bottom: 10px;">Solange Sie Fieber haben, dürfen Sie auf keinen Fall _______.</div>
+            <div id="fillblank-sentence-vi" style="font-size: 13px; color: var(--text-secondary); font-style: italic;">Chừng nào còn sốt, bạn tuyệt đối không được rời giường.</div>
+          </div>
+          
+          <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <button class="status-toggle-btn" id="btn-fillblank-hint" style="background: #FEF3C7; color: #D97706; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; margin: 0 auto;">
+              <span>💡</span> Hint
+            </button>
+          </div>
+          
+          <div id="fillblank-hint-text" style="display: none; text-align: center; font-size: 13px; font-weight: 600; color: #D97706; margin-bottom: 16px; background: #FFFBEB; padding: 10px; border-radius: 8px; border: 1px dashed #FCD34D;"></div>
+          
+          <div class="options-list" id="fillblank-options-grid">
+            <!-- 4 option buttons -->
+          </div>
+          
+          <div class="listening-reveal-box" id="fillblank-reveal-box" style="display: none; margin-top: 20px;">
+            <div id="fillblank-word-reveal" style="font-size:18px; font-weight:700; color:var(--text-primary);"></div>
+            <button class="btn-next-question" id="btn-fillblank-next">Next →</button>
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- 12. GAME 5: MIXED CHALLENGE SCREEN -->
+      <section id="mixed-game-page" class="page safe-padding-top safe-padding-bottom">
+        <div class="back-header">
+          <button class="back-btn" data-back-to="topic-dashboard-page" id="mixed-back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="back-title">Mixed Challenge</div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary);">
+          <span id="mixed-type-label" style="text-transform: uppercase; font-weight: 700; color: var(--primary);">Multiple Choice</span>
+          <span id="mixed-progress-text">1 / 10 questions</span>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom: 20px;">
+          <div class="progress-bar-fill" id="mixed-progress-fill"></div>
+        </div>
+        
+        <div id="mixed-game-container">
+          
+          <!-- Dynamic Question Box -->
+          <div class="listening-question-box" id="mixed-question-box" style="margin-bottom: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; border-radius: var(--border-radius-md); background: white; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
+            <!-- Injected dynamically in app.js -->
+          </div>
+          
+          <!-- Hint Area (only for fillblank) -->
+          <div id="mixed-hint-wrapper" style="display: none; flex-direction: column; align-items: center; margin-bottom: 20px;">
+            <button class="status-toggle-btn" id="btn-mixed-hint" style="background: #FEF3C7; color: #D97706; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;">
+              <span>💡</span> Hint
+            </button>
+            <div id="mixed-hint-text" style="display: none; text-align: center; font-size: 13px; font-weight: 600; color: #D97706; margin-top: 10px; background: #FFFBEB; padding: 10px; border-radius: 8px; border: 1px dashed #FCD34D; width: 100%;"></div>
+          </div>
+          
+          <!-- Options -->
+          <div class="options-list" id="mixed-options-grid">
+            <!-- 4 option buttons -->
+          </div>
+          
+          <!-- Reveal details -->
+          <div class="listening-reveal-box" id="mixed-reveal-box" style="display: none; margin-top: 20px;">
+            <div id="mixed-word-reveal" style="font-size:18px; font-weight:700; color:var(--text-primary);"></div>
+            <button class="btn-next-question" id="btn-mixed-next">Next →</button>
+          </div>
+          
+        </div>
+      </section>
+      
+    </main>
+    
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav id="bottom-nav">
+      <a href="#" class="nav-item active" data-tab="vocab">
+        <div data-svg="book"></div>
+        <span>Vocab</span>
+      </a>
+      <a href="#" class="nav-item" data-tab="grammar">
+        <div data-svg="grammar"></div>
+        <span>Grammar</span>
+      </a>
+      <a href="#" class="nav-item" data-tab="lesson">
+        <div data-svg="lesson"></div>
+        <span>Lesson</span>
+      </a>
+      <a href="#" class="nav-item" data-tab="test">
+        <div data-svg="test"></div>
+        <span>Test</span>
+      </a>
+    </nav>
+    
+    <!-- ========================================== -->
+    <!-- MODALS SECTION -->
+    <!-- ========================================== -->
+    
+    <!-- 1. Passive Autoplay Settings Modal -->
+    <div class="modal-overlay" id="passive-settings-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title">Autoplay Settings</span>
+          <button class="back-btn" onclick="closeModal('passive-settings-modal')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <form id="passive-settings-form">
+          <div class="settings-grid">
+            
+            <div class="settings-row">
+              <div class="settings-info">
+                <div class="settings-label">Pronunciation Repetitions</div>
+                <div class="settings-description">Repeat counts for word/sentence</div>
+              </div>
+              <div class="segment-control repeats-segment">
+                <button type="button" class="segment-btn active" data-value="1">1</button>
+                <button type="button" class="segment-btn" data-value="3">3</button>
+                <button type="button" class="segment-btn" data-value="5">5</button>
+                <button type="button" class="segment-btn" data-value="7">7</button>
+              </div>
+            </div>
+            
+            <div class="settings-row">
+              <div class="settings-info">
+                <div class="settings-label">Flip Delay (seconds)</div>
+                <div class="settings-description">Wait duration before showing translation</div>
+              </div>
+              <input type="number" id="passive-flip-delay" class="number-input" value="2" min="1" max="10">
+            </div>
+            
+            <div class="settings-row">
+              <div class="settings-info">
+                <div class="settings-label">Next Card Delay (seconds)</div>
+                <div class="settings-description">Wait duration before moving to next card</div>
+              </div>
+              <input type="number" id="passive-next-delay" class="number-input" value="3" min="1" max="10">
+            </div>
+            
+            <div class="settings-row">
+              <div class="settings-info">
+                <div class="settings-label">Card Order</div>
+                <div class="settings-description">Study cards in sequential order or random</div>
+              </div>
+              <div class="segment-control order-segment">
+                <button type="button" class="segment-btn active" data-value="sequence">Sequential</button>
+                <button type="button" class="segment-btn" data-value="random">Random</button>
+              </div>
+            </div>
+            
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 24px;">Confirm Settings</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. Active Mode Selection Bottom Sheet Modal (now Top Sheet Modal) -->
+    <div class="modal-overlay top-aligned" id="active-modes-modal">
+      <div class="modal-content" style="border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg); padding-top: calc(var(--safe-top) + 20px); padding-bottom: 24px;">
+        <div class="modal-header">
+          <span class="modal-title">🎮 Choose Study Mode</span>
+          <button class="back-btn" onclick="closeModal('active-modes-modal')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <div class="mode-grid" style="gap: 12px; margin-top: 0;">
+          
+          <div class="mode-btn" id="modal-mode-swipe" style="padding: 14px 16px;">
+            <div class="mode-icon active-swipe" style="width: 40px; height: 40px; font-size: 18px;">👋</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Swipe Cards</div>
+              <div class="mode-desc" style="font-size: 11px;">Swipe Right (Remembered), Left (Unlearned), Up (Learning)</div>
+            </div>
+          </div>
+          
+          <div class="mode-btn" id="modal-mode-match" style="padding: 14px 16px;">
+            <div class="mode-icon match" style="width: 40px; height: 40px; font-size: 18px;">🧩</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Word Match Game</div>
+              <div class="mode-desc" style="font-size: 11px;">Match German words with English translations</div>
+            </div>
+          </div>
+          
+          <div class="mode-btn" id="modal-mode-listening" style="padding: 14px 16px;">
+            <div class="mode-icon listening" style="width: 40px; height: 40px; font-size: 18px;">👂</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Listening Practice</div>
+              <div class="mode-desc" style="font-size: 11px;">Listen to German pronunciation, select translation</div>
+            </div>
+          </div>
+          
+          <div class="mode-btn" id="modal-mode-sprint" style="padding: 14px 16px;">
+            <div class="mode-icon sprint" style="width: 40px; height: 40px; font-size: 18px;">⚡</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Word Sprint Game</div>
+              <div class="mode-desc" style="font-size: 11px;">60-second speed vocabulary quiz against the clock</div>
+            </div>
+          </div>
+          
+          <div class="mode-btn" id="modal-mode-fillblank" style="padding: 14px 16px;">
+            <div class="mode-icon fillblank" style="width: 40px; height: 40px; font-size: 18px; background: #FEF3C7; color: #D97706;">📝</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Sentence Fill-in</div>
+              <div class="mode-desc" style="font-size: 11px;">Fill in the blank using vocabulary sentence examples</div>
+            </div>
+          </div>
+          
+          <div class="mode-btn" id="modal-mode-mixed" style="padding: 14px 16px;">
+            <div class="mode-icon mixed" style="width: 40px; height: 40px; font-size: 18px; background: #F5F3FF; color: #7C3AED;">🎲</div>
+            <div class="mode-info">
+              <div class="mode-name" style="font-size: 15px;">Mixed Challenge</div>
+              <div class="mode-desc" style="font-size: 11px;">A random mix of Translation, Listening, and Sentence Fill-in</div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <!-- 5. Streak Garden Modal -->
+    <div class="modal-overlay" id="streak-garden-modal">
+      <div class="modal-content" style="max-width: 420px; width: 90%; border-radius: var(--border-radius-lg); padding: 20px;">
+        <div class="modal-header">
+          <span class="modal-title">🏡 My Streak Garden</span>
+          <button class="back-btn" onclick="closeModal('streak-garden-modal')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 16px;">
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; margin: 0;">
+            Each daily study streak plants a healthy tree. Skip a day, and one of your trees will wither. Keep your streak alive to grow a lush forest!
+          </p>
+        </div>
+        
+        <!-- The Garden Bed -->
+        <div id="garden-bed" style="background: #ECFDF5; border: 2px solid #A7F3D0; border-radius: 16px; padding: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 12px; min-height: 120px; max-height: 240px; overflow-y: auto; position: relative; box-shadow: inset var(--shadow-sm);">
+          <!-- Trees injected dynamically -->
+        </div>
+        
+        <!-- Garden Legend -->
+        <div style="display: flex; justify-content: space-around; align-items: center; font-size: 11px; font-weight: 700; color: var(--text-secondary); background: #F3F4F6; padding: 8px 12px; border-radius: 10px; margin-bottom: 16px; gap: 4px; flex-wrap: wrap; border: 1px solid var(--border-color);">
+          <span title="Milestone Heart (100 days)">💖 100d</span>
+          <span title="Milestone Fruit (50 days)">🍑 50d</span>
+          <span title="Milestone Flower (10 days)">🌸 10d</span>
+          <span title="Milestone Tree (5 days)">🌳 5d</span>
+          <span title="Sprout (1 day)">🌱 1d</span>
+          <span style="color: #D1D5DB;">|</span>
+          <span title="Dry Trunk (10 missed days)">🪵 10m</span>
+          <span title="Fallen Leaf (1 missed day)">🍂 1m</span>
+        </div>
+        
+        <!-- Garden Status Info -->
+        <div style="background: #F9FAFB; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary);">Active Streak:</span>
+            <strong style="color: #10B981;" id="garden-status-active">0 days (0 trees)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary);">Missed Days:</span>
+            <strong style="color: #EF4444;" id="garden-status-dead">0 days (0 dead trees)</strong>
+          </div>
+          <div style="border-top: 1px dashed var(--border-color); margin-top: 6px; padding-top: 6px; text-align: center; color: var(--text-primary); font-weight: 600;" id="garden-motivation">
+            Plant your first seed today!
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "DeutschC1 Vocab",
+  "short_name": "DeutschC1",
+  "description": "Ứng dụng học tiếng Đức cá nhân",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F9F6F0",
+  "theme_color": "#E05A47",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
