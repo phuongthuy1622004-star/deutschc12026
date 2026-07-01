@@ -3915,3 +3915,32 @@ function startDailyTaskSwipeStudy() {
   renderSwipeCardStack();
 }
 
+// -------------------------------------------------------------
+// iOS PWA SPEECH & HTML5 AUDIO UNLOCKER
+// -------------------------------------------------------------
+function unlockIOSAudio() {
+  // Unlock HTML5 Audio
+  if (!window.globalAudio) {
+    window.globalAudio = new Audio();
+  }
+  window.globalAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+  window.globalAudio.play().then(() => {
+    console.log('HTML5 Audio successfully unlocked on iOS');
+  }).catch(err => {
+    console.warn('HTML5 Audio unlock failed:', err);
+  });
+
+  // Unlock Web Speech API (speechSynthesis)
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(utterance);
+    console.log('SpeechSynthesis unlocked on iOS');
+  }
+
+  // Remove event listeners after the first user interaction
+  document.removeEventListener('click', unlockIOSAudio);
+  document.removeEventListener('touchstart', unlockIOSAudio);
+}
+document.addEventListener('click', unlockIOSAudio);
+document.addEventListener('touchstart', unlockIOSAudio);
+

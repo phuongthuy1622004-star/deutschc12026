@@ -25,8 +25,13 @@
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 16px 40px rgba(224, 90, 71, 0.08);
   
-  --safe-top: env(safe-area-inset-top, 20px);
-  --safe-bottom: env(safe-area-inset-bottom, 20px);
+  --safe-top: 24px;
+  --safe-top: constant(safe-area-inset-top);
+  --safe-top: env(safe-area-inset-top);
+  
+  --safe-bottom: 24px;
+  --safe-bottom: constant(safe-area-inset-bottom);
+  --safe-bottom: env(safe-area-inset-bottom);
 }
 
 * {
