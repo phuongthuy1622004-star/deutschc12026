@@ -48,7 +48,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--bg-color); /* Match app background */
+  background-color: #121212;
 }
 
 body {
@@ -56,10 +56,11 @@ body {
   color: var(--text-primary);
 }
 
-/* position:absolute + top/bottom/left/right ensures iOS WebKit stretches it
-   correctly to match the window container boundaries. */
+/* position:fixed + top/bottom/left/right = anchors to actual viewport edges.
+   This is the ONLY reliable way to avoid iOS PWA bottom-gap issues.
+   No vh calculations, no --real-vh, no JS height tricks needed. */
 #app-container {
-  position: absolute;
+  position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
@@ -94,7 +95,7 @@ body {
 }
 
 .safe-padding-top {
-  padding-top: calc(16px + var(--safe-top));
+  padding-top: max(20px, var(--safe-top));
 }
 
 .safe-padding-bottom {
@@ -117,13 +118,15 @@ main {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  padding-top: calc(16px + var(--safe-top));
+  padding-top: max(20px, var(--safe-top));
   padding-bottom: 20px;
   opacity: 0;
   pointer-events: none;
   transform: translateY(15px);
   transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   box-sizing: border-box;
 }
 
@@ -162,7 +165,7 @@ h2 {
 #bottom-nav {
   position: relative;
   width: 100%;
-  height: calc(50px + var(--safe-bottom));
+  height: calc(64px + var(--safe-bottom));
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1357,7 +1360,7 @@ h2 {
 .topic-dashboard-scroll {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 66px; /* Space to clear floating footer (46px height + 8px bottom + 12px margin) */
+  padding-bottom: 56px; /* 56px pagination */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1461,21 +1464,19 @@ h2 {
 
 .topic-dashboard-footer {
   position: absolute;
-  bottom: 8px; /* Float 8px above bottom nav */
-  left: 12px;
-  right: 12px;
-  height: 46px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 56px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 10px 20px;
   z-index: 10;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 /* -------------------------------------------------------------

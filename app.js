@@ -969,7 +969,7 @@ function renderTopicPagination(totalItems) {
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   
   if (footer) footer.style.display = 'flex';
-  if (scrollContainer) scrollContainer.style.paddingBottom = '66px';
+  if (scrollContainer) scrollContainer.style.paddingBottom = '56px';
   
   // 1. Left side buttons container (Prev / Next arrows + Indicator)
   const navContainer = document.createElement('div');
