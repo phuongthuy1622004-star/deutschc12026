@@ -1065,115 +1065,118 @@ function renderTopicPagination(totalItems) {
 }
 
 // -------------------------------------------------------------
-// TEXT TO SPEECH SERVICE (GOOGLE TRANSLATE TTS & WEBSPEECH FALLBACK)
+// TEXT TO SPEECH SERVICE — iOS-safe Web Speech API only
+// Google TTS is blocked by CORS on iOS PWA; always use SpeechSynthesis
 // -------------------------------------------------------------
+
+// Pre-load voices as soon as possible
+window._cachedVoices = [];
+function loadVoices() {
+  const v = window.speechSynthesis.getVoices();
+  if (v.length > 0) window._cachedVoices = v;
+}
+loadVoices();
+if (window.speechSynthesis) {
+  window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+
 function speakText(text, lang, onEndCallback) {
-  window.speechSynthesis.cancel();
-  
+  // Stop any in-progress speech
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   if (window.currentAudio) {
     window.currentAudio.pause();
     window.currentAudio.onended = null;
     window.currentAudio.onerror = null;
     window.currentAudio = null;
   }
-  
+
   const cleanText = (text || '').toString().trim();
   if (!cleanText) {
     if (onEndCallback) onEndCallback();
     return;
   }
-  
-  const query = encodeURIComponent(cleanText);
-  const googleLang = lang.split('-')[0].toLowerCase();
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${googleLang}&client=tw-ob&q=${query}`;
-  
-  // Reuse single global Audio instance for iOS Safari autoplay support
-  if (!window.globalAudio) {
-    window.globalAudio = new Audio();
-  }
-  const audio = window.globalAudio;
-  audio.src = url;
-  window.currentAudio = audio;
-  
-  audio.onended = () => {
-    if (window.currentAudio === audio) {
-      window.currentAudio = null;
-    }
-    if (onEndCallback) onEndCallback();
-  };
-  
-  audio.onerror = (e) => {
-    console.warn('Google TTS failed, falling back to Web Speech API:', e);
-    if (window.currentAudio === audio) {
-      window.currentAudio = null;
-    }
-    speakWebSpeech(cleanText, lang, onEndCallback);
-  };
-  
-  audio.play().catch(err => {
-    console.warn('Audio play failed, falling back to Web Speech API:', err);
-    if (window.currentAudio === audio) {
-      window.currentAudio = null;
-    }
-    speakWebSpeech(cleanText, lang, onEndCallback);
-  });
+
+  // On iOS, Google TTS is always blocked by CORS. Use Web Speech API directly.
+  speakWebSpeech(cleanText, lang, onEndCallback);
 }
 
 function findFemaleVoice(voices, lang) {
-  const langKey = lang.toLowerCase().split('-')[0]; // e.g. "de", "en", "vi"
+  const langKey = lang.toLowerCase().split('-')[0];
   const candidateVoices = voices.filter(v => {
     const vLang = v.lang.toLowerCase().replace('_', '-');
     return vLang.startsWith(langKey) || vLang.startsWith(lang.toLowerCase());
   });
-  
+
   if (candidateVoices.length === 0) return null;
-  
-  // List of male keywords to avoid
+
   const maleKeywords = ['stefan', 'yannick', 'david', 'george', 'daniel', 'mark', 'ravi', 'male', 'dschamil', 'stefano', 'pavel', 'richard', 'shawn'];
-  
-  // List of female keywords to prioritize
   const femaleKeywords = ['katja', 'hedda', 'gisela', 'zira', 'hazel', 'samantha', 'susan', 'karen', 'elena', 'female', 'an', 'linh', 'lan', 'chi', 'google', 'microsoft'];
-  
-  // 1. Try to find a voice that matches female keywords and does NOT match male keywords
+
   const bestFemale = candidateVoices.find(v => {
     const name = v.name.toLowerCase();
-    const matchesFemale = femaleKeywords.some(kw => name.includes(kw));
-    const matchesMale = maleKeywords.some(kw => name.includes(kw));
-    return matchesFemale && !matchesMale;
+    return femaleKeywords.some(kw => name.includes(kw)) && !maleKeywords.some(kw => name.includes(kw));
   });
   if (bestFemale) return bestFemale;
-  
-  // 2. Try to find any voice that does NOT match male keywords
-  const neutralOrFemale = candidateVoices.find(v => {
-    const name = v.name.toLowerCase();
-    return !maleKeywords.some(kw => name.includes(kw));
-  });
-  if (neutralOrFemale) return neutralOrFemale;
-  
-  // 3. Fallback to the first candidate voice
+
+  const neutral = candidateVoices.find(v => !maleKeywords.some(kw => v.name.toLowerCase().includes(kw)));
+  if (neutral) return neutral;
+
   return candidateVoices[0];
 }
 
-// Fallback to offline local Web Speech API (Siri)
+// Core speak using Web Speech API — works offline, works on iOS PWA
 function speakWebSpeech(text, lang, onEndCallback) {
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang; // 'de-DE' or 'en-US'
-  utterance.rate = 0.85; // Read slightly slower for learners
-  
-  const voices = window.speechSynthesis.getVoices();
-  const voice = findFemaleVoice(voices, lang);
-  if (voice) {
-    utterance.voice = voice;
+  if (!window.speechSynthesis) {
+    if (onEndCallback) onEndCallback();
+    return;
   }
-  
-  utterance.onend = () => {
-    if (onEndCallback) onEndCallback();
-  };
-  utterance.onerror = () => {
-    if (onEndCallback) onEndCallback();
-  };
-  window.speechSynthesis.speak(utterance);
+
+  window.speechSynthesis.cancel();
+
+  function doSpeak(voices) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.85;
+    utterance.volume = 1.0;
+
+    const voice = findFemaleVoice(voices, lang);
+    if (voice) utterance.voice = voice;
+
+    utterance.onend = () => { if (onEndCallback) onEndCallback(); };
+    utterance.onerror = (e) => {
+      console.warn('SpeechSynthesis error:', e);
+      if (onEndCallback) onEndCallback();
+    };
+
+    window.speechSynthesis.speak(utterance);
+
+    // iOS Chromium bug: sometimes speechSynthesis stalls silently
+    // Workaround: kick it with pause/resume after short delay
+    setTimeout(() => {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }, 200);
+  }
+
+  // Use cached voices if available, otherwise wait for voiceschanged
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    window._cachedVoices = voices;
+    doSpeak(voices);
+  } else if (window._cachedVoices.length > 0) {
+    doSpeak(window._cachedVoices);
+  } else {
+    // Last resort: wait for voices to load (up to 1 second)
+    const timeout = setTimeout(() => doSpeak([]), 1000);
+    window.speechSynthesis.addEventListener('voiceschanged', function handler() {
+      clearTimeout(timeout);
+      window.speechSynthesis.removeEventListener('voiceschanged', handler);
+      const v = window.speechSynthesis.getVoices();
+      window._cachedVoices = v;
+      doSpeak(v);
+    }, { once: true });
+  }
 }
 
 function stopAudioPlayback() {
@@ -3935,29 +3938,34 @@ function startDailyTaskSwipeStudy() {
 // -------------------------------------------------------------
 // iOS PWA SPEECH & HTML5 AUDIO UNLOCKER
 // -------------------------------------------------------------
+// iOS PWA SPEECH UNLOCKER
+// iOS requires a synchronous user gesture to unlock SpeechSynthesis.
+// We hook into the very first touch/click to fire a silent utterance,
+// which "unlocks" the audio context for all future calls.
+// -------------------------------------------------------------
+let _iosAudioUnlocked = false;
+
 function unlockIOSAudio() {
-  // Unlock HTML5 Audio
-  if (!window.globalAudio) {
-    window.globalAudio = new Audio();
-  }
-  window.globalAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
-  window.globalAudio.play().then(() => {
-    console.log('HTML5 Audio successfully unlocked on iOS');
-  }).catch(err => {
-    console.warn('HTML5 Audio unlock failed:', err);
-  });
+  if (_iosAudioUnlocked) return;
+  _iosAudioUnlocked = true;
 
-  // Unlock Web Speech API (speechSynthesis)
   if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance('');
-    window.speechSynthesis.speak(utterance);
-    console.log('SpeechSynthesis unlocked on iOS');
+    // Speak a zero-length silent utterance to unlock the audio context
+    const silent = new SpeechSynthesisUtterance('\u200B'); // zero-width space
+    silent.volume = 0;
+    silent.rate = 1;
+    silent.lang = 'de-DE';
+    window.speechSynthesis.speak(silent);
+
+    // Also pre-cache voices right now while we have a user gesture
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) window._cachedVoices = voices;
   }
 
-  // Remove event listeners after the first user interaction
-  document.removeEventListener('click', unlockIOSAudio);
-  document.removeEventListener('touchstart', unlockIOSAudio);
+  document.removeEventListener('touchstart', unlockIOSAudio, true);
+  document.removeEventListener('click', unlockIOSAudio, true);
 }
-document.addEventListener('click', unlockIOSAudio);
-document.addEventListener('touchstart', unlockIOSAudio);
 
+// Use capture phase so we get the event before anything else
+document.addEventListener('touchstart', unlockIOSAudio, { capture: true, passive: true });
+document.addEventListener('click', unlockIOSAudio, { capture: true });
