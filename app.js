@@ -1124,7 +1124,9 @@ function findFemaleVoice(voices, lang) {
   return candidateVoices[0];
 }
 
-// Core speak using Web Speech API — works offline, works on iOS PWA
+// Core speak using Web Speech API — fully synchronous for iOS PWA compatibility.
+// iOS REQUIRES speechSynthesis.speak() to be called in the same synchronous
+// call stack as the user gesture. Never defer it to setTimeout or Promise.
 function speakWebSpeech(text, lang, onEndCallback) {
   if (!window.speechSynthesis) {
     if (onEndCallback) onEndCallback();
@@ -1133,50 +1135,36 @@ function speakWebSpeech(text, lang, onEndCallback) {
 
   window.speechSynthesis.cancel();
 
-  function doSpeak(voices) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = 0.85;
-    utterance.volume = 1.0;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.85;
+  utterance.volume = 1.0;
 
-    const voice = findFemaleVoice(voices, lang);
-    if (voice) utterance.voice = voice;
-
-    utterance.onend = () => { if (onEndCallback) onEndCallback(); };
-    utterance.onerror = (e) => {
-      console.warn('SpeechSynthesis error:', e);
-      if (onEndCallback) onEndCallback();
-    };
-
-    window.speechSynthesis.speak(utterance);
-
-    // iOS Chromium bug: sometimes speechSynthesis stalls silently
-    // Workaround: kick it with pause/resume after short delay
-    setTimeout(() => {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-    }, 200);
-  }
-
-  // Use cached voices if available, otherwise wait for voiceschanged
+  // Use whatever voices are available NOW (synchronous — no waiting)
   const voices = window.speechSynthesis.getVoices();
   if (voices.length > 0) {
     window._cachedVoices = voices;
-    doSpeak(voices);
-  } else if (window._cachedVoices.length > 0) {
-    doSpeak(window._cachedVoices);
-  } else {
-    // Last resort: wait for voices to load (up to 1 second)
-    const timeout = setTimeout(() => doSpeak([]), 1000);
-    window.speechSynthesis.addEventListener('voiceschanged', function handler() {
-      clearTimeout(timeout);
-      window.speechSynthesis.removeEventListener('voiceschanged', handler);
-      const v = window.speechSynthesis.getVoices();
-      window._cachedVoices = v;
-      doSpeak(v);
-    }, { once: true });
   }
+  const allVoices = window._cachedVoices || [];
+  const voice = findFemaleVoice(allVoices, lang);
+  if (voice) utterance.voice = voice;
+
+  utterance.onend = () => { if (onEndCallback) onEndCallback(); };
+  utterance.onerror = (e) => {
+    console.warn('SpeechSynthesis error:', e.error);
+    if (onEndCallback) onEndCallback();
+  };
+
+  // Speak SYNCHRONOUSLY — must be within user gesture call stack on iOS
+  window.speechSynthesis.speak(utterance);
+
+  // iOS bug: speechSynthesis can stall if another tab was active
+  // Resume it after a tiny delay if it paused itself
+  setTimeout(function() {
+    if (window.speechSynthesis && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  }, 100);
 }
 
 function stopAudioPlayback() {

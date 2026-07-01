@@ -15,6 +15,24 @@
   <!-- Theme Color for browsers -->
   <meta name="theme-color" content="#E05A47">
   
+  <!-- CRITICAL: Set real viewport height BEFORE CSS loads to fix iOS PWA bottom gap -->
+  <script>
+    // iOS Safari & PWA: 100vh includes the status bar, causing layout overflow.
+    // window.innerHeight gives the true usable height. We set it as --real-vh
+    // so CSS can use calc(var(--real-vh, 1vh) * 100) instead of 100vh.
+    (function() {
+      function setVH() {
+        var vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--real-vh', vh + 'px');
+      }
+      setVH();
+      window.addEventListener('resize', setVH);
+      window.addEventListener('orientationchange', function() {
+        setTimeout(setVH, 300);
+      });
+    })();
+  </script>
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
   
