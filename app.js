@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=23')
+    navigator.serviceWorker.register('./sw.js?v=24')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2108,15 +2108,7 @@ function selectMatchingItem(type, id, element) {
       state.matchGame.roundMatchedCount++;
       state.matchGame.xp += 10;
       
-      // Promote correct word status up the ladder (Unlearned -> Learning -> Remembered)
-      const wordObj = state.allVocab.find(item => item.id === deId);
-      if (wordObj) {
-        if (wordObj.status === 'new' || wordObj.status === 'not_memorized' || !wordObj.status) {
-          updateWordStatus(deId, 'learning');
-        } else if (wordObj.status === 'learning') {
-          updateWordStatus(deId, 'remembered');
-        }
-      }
+      // (Word status changes disabled during game mode)
       
       // Delay speak a bit to not clash with button tap pronunciation
       setTimeout(() => {
@@ -2142,9 +2134,7 @@ function selectMatchingItem(type, id, element) {
       deEl.classList.remove('selected');
       viEl.classList.remove('selected');
       
-      // Demote both mismatched words to learning status
-      updateWordStatus(deId, 'learning');
-      updateWordStatus(viId, 'learning');
+      // (Word status changes disabled during game mode)
     }
     
     state.matchGame.selectedDe = null;
@@ -2276,8 +2266,7 @@ function selectListeningAnswer(selectedMeaning, element) {
     state.listeningGame.correctCount++;
   } else {
     element.className = 'option-btn incorrect';
-    // Demote incorrect German word to learning status
-    updateWordStatus(word.id, 'learning');
+    // (Word status changes disabled during game mode)
     
     document.querySelectorAll('#listening-options-list .option-btn').forEach(btn => {
       const text = btn.querySelector('span').textContent;
@@ -2439,8 +2428,7 @@ function selectSprintAnswer(selectedMeaning, element) {
     state.sprintGame.combo = 0;
     document.getElementById('sprint-combo-val').textContent = 'Combo x1';
     
-    // Demote incorrect German word to learning status
-    updateWordStatus(word.id, 'learning');
+    // (Word status changes disabled during game mode)
     
     document.querySelectorAll('#sprint-options-grid .option-btn').forEach(btn => {
       if (btn.textContent === meaningText) {
@@ -3062,8 +3050,7 @@ function selectFillBlankAnswer(selectedWord, btnElement) {
     speakText(wordText, 'de-DE');
   } else {
     btnElement.className = 'option-btn incorrect';
-    // Demote incorrect German word to learning status
-    updateWordStatus(word.id, 'learning');
+    // (Word status changes disabled during game mode)
     
     // Highlight correct option
     document.querySelectorAll('#fillblank-options-grid .option-btn').forEach(btn => {
@@ -3334,8 +3321,7 @@ function selectMixedAnswer(selectedVal, correctVal, btnElement) {
     speakText(word.word, 'de-DE');
   } else {
     btnElement.className = 'option-btn incorrect';
-    // Demote incorrect German word to learning status
-    updateWordStatus(word.id, 'learning');
+    // (Word status changes disabled during game mode)
     
     // Highlight correct option
     document.querySelectorAll('#mixed-options-grid .option-btn').forEach(btn => {
