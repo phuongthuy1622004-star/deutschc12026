@@ -88,6 +88,14 @@ body {
   }
 }
 
+/* Target standalone PWA on Home Screen specifically to force 100vh fullscreen layout */
+@media (display-mode: standalone) {
+  html, body, #app-container {
+    height: 100vh !important;
+    min-height: 100vh !important;
+  }
+}
+
 .safe-padding-top {
   padding-top: max(20px, var(--safe-top));
 }
@@ -197,7 +205,9 @@ h2 {
 .nav-item.active::after {
   content: '';
   position: absolute;
-  bottom: 6px;
+  bottom: calc(var(--safe-bottom) + 2px);
+  left: 50%;
+  transform: translateX(-50%);
   width: 4px;
   height: 4px;
   border-radius: 50%;
