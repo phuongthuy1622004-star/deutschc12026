@@ -93,24 +93,24 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">📅</span>
               <div>
-                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Nhiệm vụ hàng ngày</div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Today's Tasks</div>
                 <div style="font-size: 11px; color: var(--text-secondary);" id="daily-task-date">Loading...</div>
               </div>
             </div>
-            <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">Trong tiến trình</span>
+            <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">In Progress</span>
           </div>
           
           <!-- Task 1: Học từ vựng -->
           <div id="task-vocab-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #3B82F6; border-radius: 12px; padding: 12px; position: relative;">
             <div style="font-size: 20px; background: #DBEAFE; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #2563EB;">📚</div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Học từ vựng hàng ngày</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Daily Vocabulary</div>
               <!-- Progress Bar -->
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
                   <div id="task-vocab-progress-bar" style="width: 0%; height: 100%; background: #3B82F6; border-radius: 3px; transition: width 0.3s ease;"></div>
                 </div>
-                <span id="task-vocab-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 0 thẻ</span>
+                <span id="task-vocab-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 0 cards</span>
               </div>
             </div>
             <div id="task-vocab-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
@@ -120,20 +120,20 @@
           <div id="task-dw-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #F59E0B; border-radius: 12px; padding: 12px; position: relative;">
             <div style="font-size: 20px; background: #FEF3C7; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #D97706;">⚡</div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Học Lesson trên DW (10 phút)</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Study DW Lesson (10m)</div>
               <!-- Progress Bar -->
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
                   <div id="task-dw-progress-bar" style="width: 0%; height: 100%; background: #F59E0B; border-radius: 3px; transition: width 0.3s ease;"></div>
                 </div>
-                <span id="task-dw-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 10 phút</span>
+                <span id="task-dw-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 10 mins</span>
               </div>
             </div>
             <div id="task-dw-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
           </div>
           
           <button class="btn-primary" id="btn-start-daily-task" style="width: 100%; margin: 0; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            🚀 Bắt đầu học
+            🚀 Start Learning
           </button>
         </div>
 
@@ -209,7 +209,7 @@
         <div class="back-header" style="padding: 16px 20px 8px 20px; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="back-title" style="margin-left: 0; font-size: 20px; font-weight: 800; color: var(--text-primary);">DW Learn German</div>
           <a href="https://learngerman.dw.com/en/learn-german/s-9528" target="_blank" rel="noopener noreferrer" class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 12px; width: auto; border-radius: 8px; display: flex; align-items: center; gap: 4px; text-decoration: none;">
-            <span>🌐</span> Mở trình duyệt
+            <span>🌐</span> Open in Browser
           </a>
         </div>
         <div style="flex: 1; width: 100%; height: 100%; overflow-y: scroll; -webkit-overflow-scrolling: touch; position: relative;">
@@ -281,12 +281,12 @@
           <button class="back-btn" data-back-to="topic-dashboard-page" id="passive-back-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <div class="back-title" id="passive-topic-title">Học Thụ Động</div>
+          <div class="back-title" id="passive-topic-title">Passive Study</div>
         </div>
         
         <!-- Progress bar -->
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary);">
-          <span>Tiến độ tự động</span>
+          <span>Auto Progress</span>
           <span id="passive-progress-text">1 / 1</span>
         </div>
         <div class="progress-bar-container">
@@ -304,7 +304,7 @@
                 <div class="word-display" id="passive-word-de">Deutsch <button class="audio-btn">🔊</button></div>
                 <div class="word-ipa" id="passive-ipa-de">[doitʃ]</div>
                 <div class="word-sentence" id="passive-sentence-de">Deutsch lernen macht Spaß.</div>
-                <div class="flip-tip">🔄 Chạm để lật và xem bản dịch</div>
+                <div class="flip-tip">🔄 Tap to flip and see translation</div>
               </div>
               
               <!-- Back Face (English) -->
@@ -316,7 +316,7 @@
                 <div id="passive-family-container" style="width: 100%;"></div>
                 <div id="passive-note-container" style="width: 100%;"></div>
                 
-                <div class="flip-tip">🔄 Chạm để lật và xem từ tiếng Đức</div>
+                <div class="flip-tip">🔄 Tap to flip and see German word</div>
               </div>
               
             </div>
@@ -343,7 +343,7 @@
         
         <div class="settings-trigger-row">
           <button class="settings-trigger-btn" id="btn-passive-settings">
-            ⚙️ Cài đặt tự động
+            ⚙️ Autoplay Settings
           </button>
         </div>
       </section>
@@ -354,11 +354,11 @@
           <button class="back-btn" data-back-to="topic-dashboard-page" id="active-back-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <div class="back-title">Học Chủ Động</div>
+          <div class="back-title">Active Study</div>
         </div>
         
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); margin-bottom: 4px;">
-          <span>Vuốt tương tác thẻ</span>
+          <span>Swipe interactive cards</span>
           <span id="active-progress-text">0 / 0</span>
         </div>
         <div class="progress-bar-container" style="margin-bottom: 12px;">
@@ -373,16 +373,16 @@
         <!-- Instructions -->
         <div class="swipe-instructions">
           <div class="swipe-instruction-box left">
-            <div class="swipe-instruction-direction">← TRÁI</div>
-            <div class="swipe-instruction-label">Chưa thuộc</div>
+            <div class="swipe-instruction-direction">← LEFT</div>
+            <div class="swipe-instruction-label">Still Learning</div>
           </div>
           <div class="swipe-instruction-box up">
-            <div class="swipe-instruction-direction">↑ LÊN</div>
-            <div class="swipe-instruction-label">Đang học</div>
+            <div class="swipe-instruction-direction">↑ UP</div>
+            <div class="swipe-instruction-label">Learning</div>
           </div>
           <div class="swipe-instruction-box right">
-            <div class="swipe-instruction-direction">PHẢI →</div>
-            <div class="swipe-instruction-label">Đã nhớ</div>
+            <div class="swipe-instruction-direction">RIGHT →</div>
+            <div class="swipe-instruction-label">Remembered</div>
           </div>
         </div>
       </section>
@@ -493,7 +493,7 @@
           
           <div class="listening-question-box" style="margin-bottom: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; border-radius: var(--border-radius-md); background: white; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
             <div id="fillblank-sentence-de" style="font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.5; margin-bottom: 10px;">Solange Sie Fieber haben, dürfen Sie auf keinen Fall _______.</div>
-            <div id="fillblank-sentence-vi" style="font-size: 13px; color: var(--text-secondary); font-style: italic;">Chừng nào còn sốt, bạn tuyệt đối không được rời giường.</div>
+            <div id="fillblank-sentence-vi" style="font-size: 13px; color: var(--text-secondary); font-style: italic;">As long as you have a fever, you must not leave your bed.</div>
           </div>
           
           <div style="display: flex; justify-content: center; margin-bottom: 20px;">

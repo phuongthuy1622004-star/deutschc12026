@@ -1698,15 +1698,15 @@ function renderSwipeCardStack() {
   const total = state.activeSwipe.cards.length;
   const currIndex = state.activeSwipe.currentIndex;
   
-  document.getElementById('active-progress-text').textContent = `${currIndex} / ${total} thẻ`;
+  document.getElementById('active-progress-text').textContent = `${currIndex} / ${total} cards`;
   document.getElementById('active-progress-fill').style.width = `${(currIndex / total) * 100}%`;
   
   if (currIndex >= total) {
-    let title = "Hoàn thành chủ đề! 🎉";
-    let desc = "Bạn đã ôn tập tất cả các thẻ trong bộ này.";
+    let title = "Topic Complete! 🎉";
+    let desc = "You have reviewed all cards in this set.";
     if (state.activeSwipe.isDailyTaskMode) {
-      title = "Nhiệm vụ hoàn thành! 🎉";
-      desc = "Bạn đã hoàn thành các thẻ trong Daily Task hôm nay. Xem lại tiến độ của bạn tại trang chủ!";
+      title = "Daily Task Complete! 🎉";
+      desc = "You have finished all cards in today's Daily Task. Check your progress on the home page!";
     }
     
     container.innerHTML = `
@@ -1714,7 +1714,7 @@ function renderSwipeCardStack() {
         <div class="result-icon">🎉</div>
         <div class="result-title">${title}</div>
         <p style="margin-bottom: 24px;">${desc}</p>
-        <button class="btn-primary" onclick="goBackFromStudy()">Quay lại</button>
+        <button class="btn-primary" onclick="goBackFromStudy()">Go Back</button>
       </div>
     `;
     return;
@@ -1761,9 +1761,9 @@ function renderSwipeCardStack() {
     const meaningsHTML = formatCardMeanings(word);
     
     cardEl.innerHTML = `
-      <div class="swipe-indicator right">Đã nhớ</div>
-      <div class="swipe-indicator left">Chưa thuộc</div>
-      <div class="swipe-indicator up">Đang học</div>
+      <div class="swipe-indicator right">Remembered</div>
+      <div class="swipe-indicator left">Still Learning</div>
+      <div class="swipe-indicator up">Learning</div>
       
       ${imageHTML}
       ${typeBadgeHTML}
@@ -1779,7 +1779,7 @@ function renderSwipeCardStack() {
         <div class="swipe-note-container" style="width: 100%;"></div>
       </div>
       
-      <div class="flip-tip">🔄 Chạm để lật và xem nghĩa</div>
+      <div class="flip-tip">🔄 Tap to flip and see meaning</div>
     `;
     
     cardEl.querySelector('.audio-btn').addEventListener('click', (e) => {
@@ -2898,7 +2898,7 @@ function updateUserStatsDashboard() {
   const missedEl = document.getElementById('dashboard-streak-missed');
   if (missedEl) {
     if (missedDays > 0) {
-      missedEl.textContent = `Bỏ quên: ${missedDays} ngày`;
+      missedEl.textContent = `Missed: ${missedDays} day${missedDays > 1 ? 's' : ''}`;
       missedEl.style.display = 'block';
     } else {
       missedEl.style.display = 'none';
@@ -2983,7 +2983,7 @@ function startFillBlankGame() {
     
     <div style="display: flex; justify-content: center; margin-bottom: 20px;">
       <button class="status-toggle-btn" id="btn-fillblank-hint" style="background: #FEF3C7; color: #D97706; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; margin: 0 auto;">
-        <span>💡</span> Gợi ý
+        <span>💡</span> Hint
       </button>
     </div>
     
@@ -3186,7 +3186,7 @@ function startMixedGame() {
     <!-- Hint Area (only for fillblank) -->
     <div id="mixed-hint-wrapper" style="display: none; flex-direction: column; align-items: center; margin-bottom: 20px;">
       <button class="status-toggle-btn" id="btn-mixed-hint" style="background: #FEF3C7; color: #D97706; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;">
-        <span>💡</span> Gợi ý
+        <span>💡</span> Hint
       </button>
       <div id="mixed-hint-text" style="display: none; text-align: center; font-size: 13px; font-weight: 600; color: #D97706; margin-top: 10px; background: #FFFBEB; padding: 10px; border-radius: 8px; border: 1px dashed #FCD34D; width: 100%;"></div>
     </div>
@@ -3901,7 +3901,7 @@ function updateDailyTaskUI() {
   const vocabCompleted = task.completed_cards;
   const vocabPct = vocabTotal > 0 ? (vocabCompleted / vocabTotal) * 100 : 0;
   
-  document.getElementById('task-vocab-progress-text').textContent = `${vocabCompleted} / ${vocabTotal} thẻ`;
+  document.getElementById('task-vocab-progress-text').textContent = `${vocabCompleted} / ${vocabTotal} cards`;
   document.getElementById('task-vocab-progress-bar').style.width = `${vocabPct}%`;
   
   const vocabItem = document.getElementById('task-vocab-item');
@@ -3923,7 +3923,7 @@ function updateDailyTaskUI() {
   const dwTargetMins = Math.floor(dwTarget / 60);
   const dwPct = Math.min(100, (dwSecs / dwTarget) * 100);
   
-  document.getElementById('task-dw-progress-text').textContent = `${dwMins} / ${dwTargetMins} phút`;
+  document.getElementById('task-dw-progress-text').textContent = `${dwMins} / ${dwTargetMins} mins`;
   document.getElementById('task-dw-progress-bar').style.width = `${dwPct}%`;
   
   const dwItem = document.getElementById('task-dw-item');
@@ -3943,20 +3943,20 @@ function updateDailyTaskUI() {
   const startBtn = document.getElementById('btn-start-daily-task');
   
   if (task.is_completed) {
-    badge.textContent = 'ĐÃ HOÀN THÀNH 🎉';
+    badge.textContent = 'COMPLETED 🎉';
     badge.style.background = '#D1FAE5';
     badge.style.color = '#065F46';
     
-    startBtn.textContent = '🎉 Nhiệm vụ ngày hoàn tất!';
+    startBtn.textContent = '🎉 Daily Tasks Completed!';
     startBtn.style.background = '#10B981';
     startBtn.style.color = 'white';
     startBtn.style.cursor = 'default';
   } else {
-    badge.textContent = 'Trong tiến trình';
+    badge.textContent = 'In Progress';
     badge.style.background = '#FEF3C7';
     badge.style.color = '#92400E';
     
-    startBtn.textContent = '🚀 Bắt đầu học';
+    startBtn.textContent = '🚀 Start Learning';
     startBtn.style.background = 'var(--primary)';
     startBtn.style.color = 'white';
     startBtn.style.cursor = 'pointer';
@@ -3968,7 +3968,7 @@ function startDailyTaskSwipeStudy() {
   
   const dailyTask = DailyTaskService.getTodayTask();
   if (!dailyTask || dailyTask.word_ids.length === 0) {
-    alert("Nhiệm vụ hôm nay trống!");
+    alert("Today's task is empty! Come back when you have words to study.");
     return;
   }
   
