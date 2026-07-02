@@ -34,7 +34,7 @@
   </script>
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
   
   <!-- Firebase SDK Compat via CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -88,38 +88,52 @@
         </div>
 
         <!-- Daily Task Section -->
-        <div id="daily-task-section" style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+        <div id="daily-task-section" style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 20px;">📅</span>
               <div>
-                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Today's Task</div>
+                <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Nhiệm vụ hàng ngày</div>
                 <div style="font-size: 11px; color: var(--text-secondary);" id="daily-task-date">Loading...</div>
               </div>
             </div>
-            <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">In Progress</span>
+            <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">Trong tiến trình</span>
           </div>
           
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
-              <span>Progress</span>
-              <strong id="daily-task-progress-text" style="color: var(--text-primary);">0 / 0 cards</strong>
+          <!-- Task 1: Học từ vựng -->
+          <div id="task-vocab-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #3B82F6; border-radius: 12px; padding: 12px; position: relative;">
+            <div style="font-size: 20px; background: #DBEAFE; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #2563EB;">📚</div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Học từ vựng hàng ngày</div>
+              <!-- Progress Bar -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
+                  <div id="task-vocab-progress-bar" style="width: 0%; height: 100%; background: #3B82F6; border-radius: 3px; transition: width 0.3s ease;"></div>
+                </div>
+                <span id="task-vocab-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 0 thẻ</span>
+              </div>
             </div>
-            <!-- Progress Bar -->
-            <div style="width: 100%; height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
-              <div id="daily-task-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #E05A47, #F59E0B); border-radius: 4px; transition: width 0.3s ease;"></div>
-            </div>
+            <div id="task-vocab-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
           </div>
-          
-          <!-- Breakdown Info -->
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); background: #F8FAFC; border-radius: 10px; padding: 8px 12px;">
-            <span>New: <strong id="daily-task-new-count" style="color: #475569;">0</strong></span>
-            <span>Learning: <strong id="daily-task-learning-count" style="color: #D97706;">0</strong></span>
-            <span>Review: <strong id="daily-task-review-count" style="color: #10B981;">0</strong></span>
+
+          <!-- Task 2: Học DW Lesson -->
+          <div id="task-dw-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #F59E0B; border-radius: 12px; padding: 12px; position: relative;">
+            <div style="font-size: 20px; background: #FEF3C7; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #D97706;">⚡</div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Học Lesson trên DW (10 phút)</div>
+              <!-- Progress Bar -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
+                  <div id="task-dw-progress-bar" style="width: 0%; height: 100%; background: #F59E0B; border-radius: 3px; transition: width 0.3s ease;"></div>
+                </div>
+                <span id="task-dw-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 10 phút</span>
+              </div>
+            </div>
+            <div id="task-dw-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
           </div>
           
           <button class="btn-primary" id="btn-start-daily-task" style="width: 100%; margin: 0; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            🚀 Start Learning
+            🚀 Bắt đầu học
           </button>
         </div>
 
@@ -164,7 +178,7 @@
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v24</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v25</div>
       </div>
     </section>
       
@@ -750,6 +764,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="app.js?v=24"></script>
+  <script src="app.js?v=25"></script>
 </body>
 </html>

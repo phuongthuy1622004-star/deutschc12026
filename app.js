@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=24')
+    navigator.serviceWorker.register('./sw.js?v=25')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2751,7 +2751,12 @@ function initUserStats() {
   // 5-second tick interval for tracking study time
   setInterval(() => {
     const activePage = document.querySelector('.page.active');
-    if (activePage && [
+    if (!activePage) return;
+    
+    const todayStr = getTodayDateString();
+    
+    // 1. General study time tracking (passive, games, active study)
+    if ([
       'passive-study-page', 
       'active-study-page', 
       'matching-game-page', 
@@ -2764,9 +2769,45 @@ function initUserStats() {
       todaySecs += 5;
       localStorage.setItem('today_study_seconds', todaySecs);
       
-      // Save stats to Firebase database on every tick interval to keep it in sync
       saveStatsToDB();
       updateUserStatsDashboard();
+    }
+    
+    // 2. DW Lesson study time tracking (Task 2)
+    if (activePage.id === 'lesson-page') {
+      let task = DailyTaskService.getTodayTask();
+      if (task) {
+        if (task.dw_study_seconds === undefined) {
+          task.dw_study_seconds = 0;
+          task.dw_target_seconds = 600;
+          task.is_dw_completed = false;
+          task.is_vocab_completed = task.completed_cards >= task.total_cards;
+        }
+        
+        task.dw_study_seconds += 5;
+        
+        // Also increase general study seconds
+        let todaySecs = parseInt(localStorage.getItem('today_study_seconds')) || 0;
+        todaySecs += 5;
+        localStorage.setItem('today_study_seconds', todaySecs);
+        saveStatsToDB();
+        
+        if (task.dw_study_seconds >= task.dw_target_seconds && !task.is_dw_completed) {
+          task.is_dw_completed = true;
+          console.log("DW Lesson task completed!");
+        }
+        
+        // Complete today's daily task if both are finished
+        if (task.is_vocab_completed && task.is_dw_completed && !task.is_completed) {
+          task.is_completed = true;
+          task.completed_at = new Date().toISOString();
+          StreakService.completeDailyTask(todayStr);
+        }
+        
+        DailyTaskService.saveTask(task);
+        updateDailyTaskUI();
+        updateUserStatsDashboard();
+      }
     }
   }, 5000);
   
@@ -3597,6 +3638,15 @@ const DailyTaskService = {
     const cachedTaskStr = localStorage.getItem(`daily_task_${todayStr}`);
     if (cachedTaskStr) {
       task = JSON.parse(cachedTaskStr);
+      // Migrate old tasks to the new multi-task structure if needed
+      if (task && task.dw_study_seconds === undefined) {
+        task.dw_study_seconds = 0;
+        task.dw_target_seconds = 600;
+        task.is_dw_completed = false;
+        task.is_vocab_completed = task.is_completed || (task.completed_cards >= task.total_cards);
+        task.is_completed = task.is_vocab_completed && task.is_dw_completed;
+        this.saveTask(task);
+      }
     }
     return task;
   },
@@ -3645,10 +3695,20 @@ const DailyTaskService = {
     task = {
       id: todayStr,
       date: todayStr,
+      
+      // Task 1: Vocabulary study
       word_ids: wordIds,
       completed_ids: [],
       total_cards: wordIds.length,
       completed_cards: 0,
+      is_vocab_completed: wordIds.length === 0,
+      
+      // Task 2: DW Lesson study
+      dw_study_seconds: 0,
+      dw_target_seconds: 600,
+      is_dw_completed: false,
+      
+      // Overall status
       is_completed: false,
       completed_at: null
     };
@@ -3670,11 +3730,13 @@ const DailyTaskService = {
       task.completed_ids.push(wordId);
       task.completed_cards = task.completed_ids.length;
       
-      if (task.completed_cards === task.total_cards) {
+      if (task.completed_cards >= task.total_cards) {
+        task.is_vocab_completed = true;
+      }
+      
+      if (task.is_vocab_completed && task.is_dw_completed && !task.is_completed) {
         task.is_completed = true;
         task.completed_at = new Date().toISOString();
-        
-        // Trigger StreakService completion
         StreakService.completeDailyTask(todayStr);
       }
       
@@ -3834,49 +3896,67 @@ function updateDailyTaskUI() {
   
   document.getElementById('daily-task-date').textContent = getTodayDateStringFormatted();
   
-  const total = task.total_cards;
-  const completed = task.completed_cards;
-  document.getElementById('daily-task-progress-text').textContent = `${completed} / ${total} cards`;
+  // 1. Render Task 1 (Vocabulary Study)
+  const vocabTotal = task.total_cards;
+  const vocabCompleted = task.completed_cards;
+  const vocabPct = vocabTotal > 0 ? (vocabCompleted / vocabTotal) * 100 : 0;
   
-  const pct = total > 0 ? (completed / total) * 100 : 0;
-  document.getElementById('daily-task-progress-bar').style.width = `${pct}%`;
+  document.getElementById('task-vocab-progress-text').textContent = `${vocabCompleted} / ${vocabTotal} thẻ`;
+  document.getElementById('task-vocab-progress-bar').style.width = `${vocabPct}%`;
   
-  let newCount = 0;
-  let learningCount = 0;
-  let reviewCount = 0;
+  const vocabItem = document.getElementById('task-vocab-item');
+  const vocabIcon = document.getElementById('task-vocab-status-icon');
+  if (task.is_vocab_completed) {
+    vocabIcon.textContent = '✅';
+    vocabItem.style.borderLeftColor = '#10B981';
+    vocabItem.style.background = '#ECFDF5';
+  } else {
+    vocabIcon.textContent = '⏳';
+    vocabItem.style.borderLeftColor = '#3B82F6';
+    vocabItem.style.background = '#F8FAFC';
+  }
   
-  task.word_ids.forEach(id => {
-    const w = state.allVocab.find(item => item.id === id);
-    if (w) {
-      const status = (w.status || 'unlearned').toLowerCase();
-      if (status === 'unlearned' || status === 'new') newCount++;
-      else if (status === 'learning') learningCount++;
-      else if (status === 'remembered' || status === 'remember') reviewCount++;
-    }
-  });
+  // 2. Render Task 2 (DW Lesson Study)
+  const dwSecs = task.dw_study_seconds || 0;
+  const dwTarget = task.dw_target_seconds || 600;
+  const dwMins = Math.floor(dwSecs / 60);
+  const dwTargetMins = Math.floor(dwTarget / 60);
+  const dwPct = Math.min(100, (dwSecs / dwTarget) * 100);
   
-  document.getElementById('daily-task-new-count').textContent = newCount;
-  document.getElementById('daily-task-learning-count').textContent = learningCount;
-  document.getElementById('daily-task-review-count').textContent = reviewCount;
+  document.getElementById('task-dw-progress-text').textContent = `${dwMins} / ${dwTargetMins} phút`;
+  document.getElementById('task-dw-progress-bar').style.width = `${dwPct}%`;
   
+  const dwItem = document.getElementById('task-dw-item');
+  const dwIcon = document.getElementById('task-dw-status-icon');
+  if (task.is_dw_completed) {
+    dwIcon.textContent = '✅';
+    dwItem.style.borderLeftColor = '#10B981';
+    dwItem.style.background = '#ECFDF5';
+  } else {
+    dwIcon.textContent = '⏳';
+    dwItem.style.borderLeftColor = '#F59E0B';
+    dwItem.style.background = '#F8FAFC';
+  }
+  
+  // 3. Render Main Status Badge and Start Button
   const badge = document.getElementById('daily-task-status-badge');
   const startBtn = document.getElementById('btn-start-daily-task');
   
   if (task.is_completed) {
-    badge.textContent = 'COMPLETED 🎉';
+    badge.textContent = 'ĐÃ HOÀN THÀNH 🎉';
     badge.style.background = '#D1FAE5';
     badge.style.color = '#065F46';
     
-    startBtn.textContent = '🎉 Daily Task Completed!';
+    startBtn.textContent = '🎉 Nhiệm vụ ngày hoàn tất!';
     startBtn.style.background = '#10B981';
     startBtn.style.color = 'white';
     startBtn.style.cursor = 'default';
   } else {
-    badge.textContent = 'In Progress';
+    badge.textContent = 'Trong tiến trình';
     badge.style.background = '#FEF3C7';
     badge.style.color = '#92400E';
     
-    startBtn.textContent = '🚀 Start Learning';
+    startBtn.textContent = '🚀 Bắt đầu học';
     startBtn.style.background = 'var(--primary)';
     startBtn.style.color = 'white';
     startBtn.style.cursor = 'pointer';
