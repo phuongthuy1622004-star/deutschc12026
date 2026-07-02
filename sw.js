@@ -3,8 +3,8 @@ const CACHE_NAME = 'deutsch-c1-cache-v11';
 const ASSETS = [
   './',
   './index.html',
-  './style.css',
-  './app.js',
+  './style.css?v=11',
+  './app.js?v=11',
   './manifest.json',
   './icon.png'
 ];
