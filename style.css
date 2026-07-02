@@ -197,7 +197,7 @@ h2 {
 .nav-item.active::after {
   content: '';
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 2px);
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
