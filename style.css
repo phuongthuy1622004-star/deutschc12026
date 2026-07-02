@@ -156,17 +156,15 @@ h2 {
 #bottom-nav {
   position: relative;
   width: 100%;
-  height: calc(56px + var(--safe-bottom));
+  height: 56px;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-around;
-  align-items: flex-start; /* Align content to the top so padding-bottom handles safe area */
-  padding-top: 6px;
-  padding-bottom: var(--safe-bottom);
-  box-sizing: border-box;
+  align-items: center;
+  margin-bottom: var(--safe-bottom); /* Push the navigation bar up, leaving the bottom safe area beige */
   z-index: 100;
 }
 
@@ -174,9 +172,9 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   flex: 1;
-  height: 50px; /* Constrain active area to the upper bar height */
+  height: 100%;
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 10px;
@@ -206,7 +204,7 @@ h2 {
 .nav-item.active::after {
   content: '';
   position: absolute;
-  bottom: 0px; /* Position at the bottom of the 50px high active area, safely below text */
+  bottom: 4px; /* Position centered below the text label */
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
