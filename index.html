@@ -23,7 +23,7 @@
     (function() {
       function setVH() {
         var vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--real-vh', vh + 'px');
+        document.documentElement.style.setProperty('--real-vh', vh);
       }
       setVH();
       window.addEventListener('resize', setVH);
@@ -34,7 +34,7 @@
   </script>
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
   
   <!-- Firebase SDK Compat via CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -749,6 +749,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
