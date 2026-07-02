@@ -1051,7 +1051,8 @@ h2 {
   box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
   animation: slideIn 0.3s cubic-bezier(0.1, 0.8, 0.3, 1);
   max-height: 80%;
-  overflow-y: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Top aligned sheet modal */
@@ -1352,7 +1353,7 @@ h2 {
    ------------------------------------------------------------- */
 .topic-dashboard-scroll {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding-bottom: 56px; /* 56px pagination */
   -webkit-overflow-scrolling: touch;
 }
