@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=32')
+    navigator.serviceWorker.register('./sw.js?v=33')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -3740,10 +3740,14 @@ const DailyTaskService = {
     
     const todayStr = getTodayDateString();
     let task = this.getTodayTask();
-    if (task) return task; // Already exists
     
-    // Group 1: Max 20 NEW words (sorted by numeric/alphabetical ID to follow sequence)
-    const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW')
+    // If task exists and has valid cards, return it. If cached task is empty (0 cards), discard and regenerate!
+    if (task && task.word_ids && task.word_ids.length > 0) {
+      return task;
+    }
+    
+    // Group 1: Max 20 NEW / UNLEARNED / NOT_MEMORIZED words (sorted by numeric/alphabetical ID to follow sequence)
+    const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW' || w.status === 'not_memorized')
                              .sort((a, b) => {
                                const numA = parseInt(a.id);
                                const numB = parseInt(b.id);
