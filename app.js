@@ -1923,9 +1923,9 @@ function setupSwipeGestures(cardEl, wordId) {
     isDragging = false;
     cardEl.classList.remove('dragging');
     
-    // Check if it is a single tap (very small displacement)
+    // Check if it is a single tap (small displacement tolerance up to 15px for fast mobile taps)
     const displacement = Math.sqrt(currentX * currentX + currentY * currentY);
-    if (displacement < 8) {
+    if (displacement < 15) {
       const frontElements = cardEl.querySelectorAll('.word-display, .word-ipa, .word-sentence');
       const backElements = cardEl.querySelector('.card-inner-meaning');
       const tipEl = cardEl.querySelector('.flip-tip');
@@ -1933,18 +1933,18 @@ function setupSwipeGestures(cardEl, wordId) {
       const word = state.activeSwipe.cards[state.activeSwipe.currentIndex];
       if (word) {
         const wordText = word.word || word.id || '';
-        const meaningText = word.meaning_en || word.meaning || word.meaning_vn || '';
         
         if (backElements.style.display === 'none') {
           frontElements.forEach(el => el.style.display = 'none');
           backElements.style.display = 'block';
           speakTranslationSequence(word);
-          tipEl.textContent = '🔄 Tap to show German card';
+          if (tipEl) tipEl.textContent = '🔄 Tap to show German card';
         } else {
           frontElements.forEach(el => el.style.display = '');
           backElements.style.display = 'none';
+          stopAudioPlayback();
           speakText(wordText, 'de-DE');
-          tipEl.textContent = '🔄 Tap to flip and show translation';
+          if (tipEl) tipEl.textContent = '🔄 Tap to flip and show translation';
         }
       }
       currentX = 0;
