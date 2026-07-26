@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=26')
+    navigator.serviceWorker.register('./sw.js?v=28')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2665,7 +2665,8 @@ function goBackFromStudy() {
   document.getElementById('topic-desc-dashboard').textContent = `${state.vocabList.length} words`;
   renderTopicWords();
   
-  showPage('topic-dashboard-page');
+  const targetPage = state.studySourcePage || 'topic-dashboard-page';
+  showPage(targetPage);
 }
 
 function openSingleWordFlashcard(word, activeListContext) {
@@ -4045,6 +4046,8 @@ function startDailyTaskSwipeStudy() {
   }
   
   state.activeSwipe.isDailyTaskMode = true;
+  state.studySourcePage = 'vocab-page';
+  updateBackButtonsTarget();
   
   showPage('active-study-page');
   renderSwipeCardStack();
