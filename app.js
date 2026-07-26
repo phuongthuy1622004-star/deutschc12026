@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=29')
+    navigator.serviceWorker.register('./sw.js?v=30')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -1774,12 +1774,13 @@ function renderSwipeCardStack() {
       <div class="swipe-indicator left">Still Learning</div>
       <div class="swipe-indicator up">Learning</div>
       
-      ${imageHTML}
-      ${typeBadgeHTML}
-      
-      <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
-      <div class="word-ipa">${ipaText}</div>
-      <div class="word-sentence">${word.sentence || ''}</div>
+      <div class="card-front-wrapper" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        ${imageHTML}
+        ${typeBadgeHTML}
+        <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
+        <div class="word-ipa">${ipaText}</div>
+        <div class="word-sentence">${word.sentence || ''}</div>
+      </div>
       
       <div class="card-inner-meaning" style="display: none; text-align: center; margin-top: 15px; width: 100%; animation: slideUp 0.2s ease;">
         ${meaningsHTML}
@@ -1888,15 +1889,23 @@ function setupSwipeGestures(cardEl, wordId) {
         const meaningText = word.meaning_en || word.meaning || word.meaning_vn || '';
         
         if (backElements.style.display === 'none') {
-          frontElements.forEach(el => el.style.display = 'none');
+          if (cardEl.querySelector('.card-front-wrapper')) {
+            cardEl.querySelector('.card-front-wrapper').style.display = 'none';
+          } else {
+            frontElements.forEach(el => el.style.display = 'none');
+          }
           backElements.style.display = 'block';
           speakTranslationSequence(word);
-          tipEl.textContent = '🔄 Tap to show German card';
+          tipEl.textContent = '🔄 Tap to show German word';
         } else {
-          frontElements.forEach(el => el.style.display = '');
+          if (cardEl.querySelector('.card-front-wrapper')) {
+            cardEl.querySelector('.card-front-wrapper').style.display = 'block';
+          } else {
+            frontElements.forEach(el => el.style.display = '');
+          }
           backElements.style.display = 'none';
           speakText(wordText, 'de-DE');
-          tipEl.textContent = '🔄 Tap to flip and show translation';
+          tipEl.textContent = '🔄 Tap to flip and see meaning';
         }
       }
       currentX = 0;
