@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=28')
+    navigator.serviceWorker.register('./sw.js?v=29')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -189,7 +189,11 @@ function initFirebase() {
       .then((snapshot) => {
         const val = snapshot.val();
         if (val) {
-          const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+          // Normalize: always use String(key) as the id, regardless of what's in the data
+          const list = Object.keys(val).map(key => {
+            const item = val[key];
+            return { ...item, id: String(key) };  // key always wins as canonical id
+          });
           state.allVocab = list;
           updateStatsFromList(list);
         } else {
@@ -253,7 +257,10 @@ function seedDefaultDataToFirebase() {
       state.db.ref('vocab').once('value').then(snap => {
         const val = snap.val();
         if (val) {
-          const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+          const list = Object.keys(val).map(key => {
+            const item = val[key];
+            return { ...item, id: String(key) };
+          });
           state.allVocab = list;
           updateStatsFromList(list);
         }
