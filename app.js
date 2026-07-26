@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=33')
+    navigator.serviceWorker.register('./sw.js?v=25')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -189,11 +189,7 @@ function initFirebase() {
       .then((snapshot) => {
         const val = snapshot.val();
         if (val) {
-          // Normalize: always use String(key) as the id, regardless of what's in the data
-          const list = Object.keys(val).map(key => {
-            const item = val[key];
-            return { ...item, id: String(key) };  // key always wins as canonical id
-          });
+          const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
           state.allVocab = list;
           updateStatsFromList(list);
         } else {
@@ -257,10 +253,7 @@ function seedDefaultDataToFirebase() {
       state.db.ref('vocab').once('value').then(snap => {
         const val = snap.val();
         if (val) {
-          const list = Object.keys(val).map(key => {
-            const item = val[key];
-            return { ...item, id: String(key) };
-          });
+          const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
           state.allVocab = list;
           updateStatsFromList(list);
         }
@@ -662,7 +655,7 @@ function setupEventListeners() {
     if (state.passive.settings.isRandom) {
       state.vocabList.sort(() => Math.random() - 0.5);
     } else {
-      sortById(state.vocabList);
+      state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
     }
     
     // Find the index of the word we were on, so we don't jump cards
@@ -824,7 +817,7 @@ function openWordExplorer(filterType, queryValue, titleText) {
   }
   
   // Sort by ID to preserve database sequence
-  sortById(filtered);
+  filtered.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
   
   // Load words into active study list
   state.vocabList = [...filtered];
@@ -943,7 +936,7 @@ function renderTopicWords() {
           updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
         }
         
-        sortById(updatedList);
+        updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
         state.vocabList = [...updatedList];
         
         // Safety check pagination
@@ -1201,7 +1194,6 @@ function speakFlashcardSequence(word) {
   stopAudioPlayback();
   
   const deText = word.word || '';
-  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   
   let noteText = '';
@@ -1216,18 +1208,18 @@ function speakFlashcardSequence(word) {
   if (deText) {
     speakText(deText, 'de-DE', () => {
       window.speechSequenceTimeout = setTimeout(() => {
-        if (vnText) {
-          speakText(vnText, 'vi-VN', () => {
-            if (enText) {
-              window.speechSequenceTimeout = setTimeout(() => {
-                speakText(enText, 'en-US');
-              }, 400);
-            }
+        if (enText) {
+          speakText(enText, 'en-US', () => {
+            window.speechSequenceTimeout = setTimeout(() => {
+              if (noteText && noteText.trim() !== '') {
+                speakText(noteText, 'vi-VN');
+              }
+            }, 600);
           });
-        } else if (enText) {
-          speakText(enText, 'en-US');
+        } else if (noteText && noteText.trim() !== '') {
+          speakText(noteText, 'vi-VN');
         }
-      }, 500);
+      }, 600);
     });
   }
 }
@@ -1247,7 +1239,6 @@ window.speakFlashcardSequenceById = function(wordId) {
 
 function speakTranslationSequence(word) {
   stopAudioPlayback();
-  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   let noteText = '';
   if (word.note) {
@@ -1258,16 +1249,16 @@ function speakTranslationSequence(word) {
     }
   }
   
-  if (vnText) {
-    speakText(vnText, 'vi-VN', () => {
-      if (enText) {
-        window.speechSequenceTimeout = setTimeout(() => {
-          speakText(enText, 'en-US');
-        }, 400);
-      }
+  if (enText) {
+    speakText(enText, 'en-US', () => {
+      window.speechSequenceTimeout = setTimeout(() => {
+        if (noteText && noteText.trim() !== '') {
+          speakText(noteText, 'vi-VN');
+        }
+      }, 600);
     });
-  } else if (enText) {
-    speakText(enText, 'en-US');
+  } else if (noteText && noteText.trim() !== '') {
+    speakText(noteText, 'vi-VN');
   }
 }
 
@@ -1380,7 +1371,7 @@ function startPassiveStudy() {
   if (state.passive.settings.isRandom) {
     state.vocabList.sort(() => Math.random() - 0.5);
   } else {
-    sortById(state.vocabList);
+    state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
   }
   
   showPage('passive-study-page');
@@ -1774,16 +1765,12 @@ function renderSwipeCardStack() {
       <div class="swipe-indicator left">Still Learning</div>
       <div class="swipe-indicator up">Learning</div>
       
-      <div class="card-front-wrapper" style="width: 100%; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #1F2229;">
-        ${imageHTML}
-        ${typeBadgeHTML}
-        <div class="word-display" style="margin-top: 10px; font-size: 32px; font-weight: 800; color: #1F2229; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span>${wordText}</span>
-          <button class="audio-btn" data-audio="${wordText}" style="background: none; border: none; font-size: 24px; cursor: pointer;">🔊</button>
-        </div>
-        ${ipaText ? `<div class="word-ipa" style="font-size: 16px; color: #6B7280; margin-top: 4px; margin-bottom: 12px;">${ipaText}</div>` : ''}
-        ${word.sentence ? `<div class="word-sentence" style="font-size: 15px; color: #374151; line-height: 1.5; margin-top: 8px; max-width: 90%; text-align: center;">${word.sentence}</div>` : ''}
-      </div>
+      ${imageHTML}
+      ${typeBadgeHTML}
+      
+      <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
+      <div class="word-ipa">${ipaText}</div>
+      <div class="word-sentence">${word.sentence || ''}</div>
       
       <div class="card-inner-meaning" style="display: none; text-align: center; margin-top: 15px; width: 100%; animation: slideUp 0.2s ease;">
         ${meaningsHTML}
@@ -1879,9 +1866,9 @@ function setupSwipeGestures(cardEl, wordId) {
     isDragging = false;
     cardEl.classList.remove('dragging');
     
-    // Check if it is a single tap (small touch movement tolerance)
+    // Check if it is a single tap (very small displacement)
     const displacement = Math.sqrt(currentX * currentX + currentY * currentY);
-    if (displacement < 20) {
+    if (displacement < 8) {
       const frontElements = cardEl.querySelectorAll('.word-display, .word-ipa, .word-sentence');
       const backElements = cardEl.querySelector('.card-inner-meaning');
       const tipEl = cardEl.querySelector('.flip-tip');
@@ -1892,23 +1879,15 @@ function setupSwipeGestures(cardEl, wordId) {
         const meaningText = word.meaning_en || word.meaning || word.meaning_vn || '';
         
         if (backElements.style.display === 'none') {
-          if (cardEl.querySelector('.card-front-wrapper')) {
-            cardEl.querySelector('.card-front-wrapper').style.display = 'none';
-          } else {
-            frontElements.forEach(el => el.style.display = 'none');
-          }
+          frontElements.forEach(el => el.style.display = 'none');
           backElements.style.display = 'block';
           speakTranslationSequence(word);
-          tipEl.textContent = '🔄 Tap to show German word';
+          tipEl.textContent = '🔄 Tap to show German card';
         } else {
-          if (cardEl.querySelector('.card-front-wrapper')) {
-            cardEl.querySelector('.card-front-wrapper').style.display = 'block';
-          } else {
-            frontElements.forEach(el => el.style.display = '');
-          }
+          frontElements.forEach(el => el.style.display = '');
           backElements.style.display = 'none';
           speakText(wordText, 'de-DE');
-          tipEl.textContent = '🔄 Tap to flip and see meaning';
+          tipEl.textContent = '🔄 Tap to flip and show translation';
         }
       }
       currentX = 0;
@@ -2645,15 +2624,6 @@ function updateBackButtonsTarget() {
   });
 }
 
-function sortById(list) {
-  return list.sort((a, b) => {
-    const numA = parseInt(a.id);
-    const numB = parseInt(b.id);
-    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-    return String(a.id || '').localeCompare(String(b.id || ''));
-  });
-}
-
 function restoreVocabList() {
   let updatedList = [];
   if (state.tempFilterType === 'topic') {
@@ -2668,21 +2638,11 @@ function restoreVocabList() {
     updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
   }
   
-  sortById(updatedList);
+  updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
   state.vocabList = [...updatedList];
 }
 
 function goBackFromStudy() {
-  const targetPage = state.studySourcePage || 'topic-dashboard-page';
-  
-  // If returning to home (vocab-page), no need to restore topic list
-  if (targetPage === 'vocab-page') {
-    state.studySourcePage = null;
-    state.activeSwipe.isDailyTaskMode = false;
-    showPage('vocab-page');
-    return;
-  }
-  
   restoreVocabList();
   
   // Safety check pagination
@@ -2694,8 +2654,7 @@ function goBackFromStudy() {
   document.getElementById('topic-desc-dashboard').textContent = `${state.vocabList.length} words`;
   renderTopicWords();
   
-  state.studySourcePage = null;
-  showPage(targetPage);
+  showPage('topic-dashboard-page');
 }
 
 function openSingleWordFlashcard(word, activeListContext) {
@@ -3724,7 +3683,7 @@ const DailyTaskService = {
   },
   
   saveTask(task) {
-    if (!task || !task.date) return;  // null guard
+    if (!task) return;
     const todayStr = task.date;
     localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(task));
     
@@ -3740,14 +3699,10 @@ const DailyTaskService = {
     
     const todayStr = getTodayDateString();
     let task = this.getTodayTask();
+    if (task) return task; // Already exists
     
-    // If task exists and has valid cards, return it. If cached task is empty (0 cards), discard and regenerate!
-    if (task && task.word_ids && task.word_ids.length > 0) {
-      return task;
-    }
-    
-    // Group 1: Max 20 NEW / UNLEARNED / NOT_MEMORIZED words (sorted by numeric/alphabetical ID to follow sequence)
-    const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW' || w.status === 'not_memorized')
+    // Group 1: Max 20 NEW words (sorted by numeric/alphabetical ID to follow sequence)
+    const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW')
                              .sort((a, b) => {
                                const numA = parseInt(a.id);
                                const numB = parseInt(b.id);
@@ -4050,66 +4005,36 @@ function updateDailyTaskUI() {
 }
 
 function startDailyTaskSwipeStudy() {
-  // Safety: allVocab must be loaded
-  if (!state.allVocab || state.allVocab.length === 0) {
-    alert('Vocabulary data is still loading. Please wait a moment and try again.');
-    return;
-  }
-  
   state.activeSwipe.currentIndex = 0;
-  state.activeSwipe.isDailyTaskMode = true;
-  state.studySourcePage = 'vocab-page';
   
-  // Get or generate today's task
-  let currentTask = DailyTaskService.getTodayTask();
-  if (!currentTask || !currentTask.word_ids || currentTask.word_ids.length === 0) {
-    currentTask = DailyTaskService.generateTodayTask(state.allVocab);
-  }
-  
-  if (!currentTask || !currentTask.word_ids || currentTask.word_ids.length === 0) {
-    alert("Today's task is empty! All words may already be learned.");
-    return;
-  }
-  
-  // Convert all IDs to string for safe comparison
-  const taskWordIds = currentTask.word_ids.map(id => String(id));
-  
-  // Match words from allVocab — convert both sides to String for comparison
-  const activeList = state.allVocab.filter(word => taskWordIds.includes(String(word.id)));
-  
-  if (activeList.length === 0) {
-    // Fallback: task IDs exist but no matching words — likely ID type mismatch
-    // Try regenerating fresh task
-    DailyTaskService.saveTask(null);
-    localStorage.removeItem(`daily_task_${currentTask.date}`);
-    const freshTask = DailyTaskService.generateTodayTask(state.allVocab);
-    if (freshTask && freshTask.word_ids && freshTask.word_ids.length > 0) {
-      const freshIds = freshTask.word_ids.map(id => String(id));
-      const freshList = state.allVocab.filter(w => freshIds.includes(String(w.id)));
-      if (freshList.length > 0) {
-        state.activeSwipe.cards = freshList.sort(() => Math.random() - 0.5);
-        state.vocabList = freshList;
-        updateBackButtonsTarget();
-        showPage('active-study-page');
-        renderSwipeCardStack();
-        return;
-      }
+  const dailyTask = DailyTaskService.getTodayTask();
+  if (!dailyTask || !dailyTask.word_ids || dailyTask.word_ids.length === 0) {
+    // Regenerate task if cached task was empty
+    const newTask = DailyTaskService.generateTodayTask(state.allVocab);
+    if (!newTask || !newTask.word_ids || newTask.word_ids.length === 0) {
+      alert("Today's task is empty! Come back when you have words to study.");
+      return;
     }
-    alert("No matching words found. Please check your vocabulary data in Firebase.");
-    return;
   }
   
+  const currentTask = DailyTaskService.getTodayTask();
+  const taskWordIds = (currentTask.word_ids || []).map(id => String(id));
+  const activeList = state.allVocab.filter(word => taskWordIds.includes(String(word.id)));
   state.vocabList = activeList;
   
-  // Exclude already swiped cards (show uncompleted first)
+  // Exclude already swiped cards for today to avoid duplicate work
   const completedIds = (currentTask.completed_ids || []).map(id => String(id));
   const uncompletedCards = activeList.filter(word => !completedIds.includes(String(word.id)));
   
-  // If all done today, let user review again
-  state.activeSwipe.cards = (uncompletedCards.length > 0 ? uncompletedCards : activeList)
-    .sort(() => Math.random() - 0.5);
+  if (uncompletedCards.length === 0) {
+    // Already swiped all cards, let them review again
+    state.activeSwipe.cards = activeList.sort(() => Math.random() - 0.5);
+  } else {
+    state.activeSwipe.cards = uncompletedCards.sort(() => Math.random() - 0.5);
+  }
   
-  updateBackButtonsTarget();
+  state.activeSwipe.isDailyTaskMode = true;
+  
   showPage('active-study-page');
   renderSwipeCardStack();
 }
