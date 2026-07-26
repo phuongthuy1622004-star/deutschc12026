@@ -1202,6 +1202,7 @@ function speakFlashcardSequence(word) {
   stopAudioPlayback();
   
   const deText = word.word || '';
+  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   
   let noteText = '';
@@ -1216,7 +1217,23 @@ function speakFlashcardSequence(word) {
   if (deText) {
     speakText(deText, 'de-DE', () => {
       window.speechSequenceTimeout = setTimeout(() => {
-        if (enText) {
+        if (vnText) {
+          speakText(vnText, 'vi-VN', () => {
+            window.speechSequenceTimeout = setTimeout(() => {
+              if (enText) {
+                speakText(enText, 'en-US', () => {
+                  window.speechSequenceTimeout = setTimeout(() => {
+                    if (noteText && noteText.trim() !== '') {
+                      speakText(noteText, 'vi-VN');
+                    }
+                  }, 600);
+                });
+              } else if (noteText && noteText.trim() !== '') {
+                speakText(noteText, 'vi-VN');
+              }
+            }, 600);
+          });
+        } else if (enText) {
           speakText(enText, 'en-US', () => {
             window.speechSequenceTimeout = setTimeout(() => {
               if (noteText && noteText.trim() !== '') {
@@ -1247,6 +1264,7 @@ window.speakFlashcardSequenceById = function(wordId) {
 
 function speakTranslationSequence(word) {
   stopAudioPlayback();
+  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   let noteText = '';
   if (word.note) {
@@ -1257,7 +1275,23 @@ function speakTranslationSequence(word) {
     }
   }
   
-  if (enText) {
+  if (vnText) {
+    speakText(vnText, 'vi-VN', () => {
+      window.speechSequenceTimeout = setTimeout(() => {
+        if (enText) {
+          speakText(enText, 'en-US', () => {
+            window.speechSequenceTimeout = setTimeout(() => {
+              if (noteText && noteText.trim() !== '') {
+                speakText(noteText, 'vi-VN');
+              }
+            }, 600);
+          });
+        } else if (noteText && noteText.trim() !== '') {
+          speakText(noteText, 'vi-VN');
+        }
+      }, 600);
+    });
+  } else if (enText) {
     speakText(enText, 'en-US', () => {
       window.speechSequenceTimeout = setTimeout(() => {
         if (noteText && noteText.trim() !== '') {
@@ -1641,9 +1675,24 @@ function runPassiveAutoplayStep() {
         // Flip card visually
         document.getElementById('passive-flashcard').classList.add('flipped');
         
-        // Read English translation (only once)
-        if (state.passive.settings.speakMeaning && meaningText) {
-          speakText(meaningText, 'en-US', () => {
+        // Read Vietnamese meaning (vi-VN), then English meaning (en-US)
+        const vnText = wordObj.meaning_vn || wordObj.meaning || '';
+        const enText = wordObj.meaning_en || '';
+        
+        if (state.passive.settings.speakMeaning && vnText) {
+          speakText(vnText, 'vi-VN', () => {
+            if (enText) {
+              state.passive.audioTimeout = setTimeout(() => {
+                speakText(enText, 'en-US', () => {
+                  state.passive.audioTimeout = setTimeout(readNoteIfPresent, 500);
+                });
+              }, 500);
+            } else {
+              state.passive.audioTimeout = setTimeout(readNoteIfPresent, 500);
+            }
+          });
+        } else if (state.passive.settings.speakMeaning && enText) {
+          speakText(enText, 'en-US', () => {
             state.passive.audioTimeout = setTimeout(readNoteIfPresent, 500);
           });
         } else {
