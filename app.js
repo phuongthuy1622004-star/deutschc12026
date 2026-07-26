@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=25')
+    navigator.serviceWorker.register('./sw.js?v=26')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -655,7 +655,7 @@ function setupEventListeners() {
     if (state.passive.settings.isRandom) {
       state.vocabList.sort(() => Math.random() - 0.5);
     } else {
-      state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+      sortById(state.vocabList);
     }
     
     // Find the index of the word we were on, so we don't jump cards
@@ -817,7 +817,7 @@ function openWordExplorer(filterType, queryValue, titleText) {
   }
   
   // Sort by ID to preserve database sequence
-  filtered.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+  sortById(filtered);
   
   // Load words into active study list
   state.vocabList = [...filtered];
@@ -936,7 +936,7 @@ function renderTopicWords() {
           updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
         }
         
-        updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+        sortById(updatedList);
         state.vocabList = [...updatedList];
         
         // Safety check pagination
@@ -1371,7 +1371,7 @@ function startPassiveStudy() {
   if (state.passive.settings.isRandom) {
     state.vocabList.sort(() => Math.random() - 0.5);
   } else {
-    state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+    sortById(state.vocabList);
   }
   
   showPage('passive-study-page');
@@ -2624,6 +2624,15 @@ function updateBackButtonsTarget() {
   });
 }
 
+function sortById(list) {
+  return list.sort((a, b) => {
+    const numA = parseInt(a.id);
+    const numB = parseInt(b.id);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
 function restoreVocabList() {
   let updatedList = [];
   if (state.tempFilterType === 'topic') {
@@ -2638,7 +2647,7 @@ function restoreVocabList() {
     updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
   }
   
-  updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+  sortById(updatedList);
   state.vocabList = [...updatedList];
 }
 
