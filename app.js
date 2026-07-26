@@ -3445,16 +3445,30 @@ function openStreakGardenModal() {
   tempStreak %= 5;
   const sprouts = tempStreak;
   
-  // Calculate tiers for missed days
+  // Calculate tiers for missed days (5 milestone levels)
   let tempMissed = missedDays;
-  const deadLogs = Math.floor(tempMissed / 10);
-  const deadLeaves = tempMissed % 10;
+  const deadTombs = Math.floor(tempMissed / 100);
+  tempMissed %= 100;
+  const deadSkulls = Math.floor(tempMissed / 50);
+  tempMissed %= 50;
+  const deadCacti = Math.floor(tempMissed / 10);
+  tempMissed %= 10;
+  const deadLogs = Math.floor(tempMissed / 5);
+  tempMissed %= 5;
+  const deadLeaves = tempMissed;
   
   // Milestone pools for randomization
   const heartPool = ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝', '🤍', '🤎'];
   const fruitPool = ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'];
   const flowerPool = ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'];
   const treePool = ['🌳', '🌲', '🌴', '🎋'];
+
+  // Dead milestone pools
+  const tombPool = ['🪦', '⚰️', '👻', '🧟'];
+  const skullPool = ['💀', '☠️', '🦴'];
+  const cactusPool = ['🌵', '🪨', '🕸️'];
+  const logPool = ['🪵', '🛖', '🧱'];
+  const leafPool = ['🍂', '🍁', '🥀', '🌾'];
   
   // Build garden items list
   const gardenItems = [];
@@ -3480,9 +3494,27 @@ function openStreakGardenModal() {
     gardenItems.push({ type: 'healthy', emoji: '🌱', label: '1d' });
   }
   
-  // Add dead trees
-  for (let i = 0; i < deadLogs; i++) gardenItems.push({ type: 'dead', emoji: '🪵', label: '10m' });
-  for (let i = 0; i < deadLeaves; i++) gardenItems.push({ type: 'dead', emoji: '🍂', label: '1m' });
+  // Add dead trees (5 milestone levels)
+  for (let i = 0; i < deadTombs; i++) {
+    const emoji = tombPool[i % tombPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '100m' });
+  }
+  for (let i = 0; i < deadSkulls; i++) {
+    const emoji = skullPool[i % skullPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '50m' });
+  }
+  for (let i = 0; i < deadCacti; i++) {
+    const emoji = cactusPool[i % cactusPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '10m' });
+  }
+  for (let i = 0; i < deadLogs; i++) {
+    const emoji = logPool[i % logPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '5m' });
+  }
+  for (let i = 0; i < deadLeaves; i++) {
+    const emoji = leafPool[i % leafPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '1m' });
+  }
   
   // Compute total slots (minimum 15 slots, grows dynamically in rows of 5)
   const totalSlots = Math.max(15, Math.ceil(gardenItems.length / 5) * 5);
