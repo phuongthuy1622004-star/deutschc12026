@@ -1194,6 +1194,7 @@ function speakFlashcardSequence(word) {
   stopAudioPlayback();
   
   const deText = word.word || '';
+  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   
   let noteText = '';
@@ -1208,18 +1209,18 @@ function speakFlashcardSequence(word) {
   if (deText) {
     speakText(deText, 'de-DE', () => {
       window.speechSequenceTimeout = setTimeout(() => {
-        if (enText) {
-          speakText(enText, 'en-US', () => {
-            window.speechSequenceTimeout = setTimeout(() => {
-              if (noteText && noteText.trim() !== '') {
-                speakText(noteText, 'vi-VN');
-              }
-            }, 600);
+        if (vnText) {
+          speakText(vnText, 'vi-VN', () => {
+            if (enText) {
+              window.speechSequenceTimeout = setTimeout(() => {
+                speakText(enText, 'en-US');
+              }, 400);
+            }
           });
-        } else if (noteText && noteText.trim() !== '') {
-          speakText(noteText, 'vi-VN');
+        } else if (enText) {
+          speakText(enText, 'en-US');
         }
-      }, 600);
+      }, 500);
     });
   }
 }
@@ -1239,6 +1240,7 @@ window.speakFlashcardSequenceById = function(wordId) {
 
 function speakTranslationSequence(word) {
   stopAudioPlayback();
+  const vnText = word.meaning_vn || word.meaning || '';
   const enText = word.meaning_en || '';
   let noteText = '';
   if (word.note) {
@@ -1249,16 +1251,16 @@ function speakTranslationSequence(word) {
     }
   }
   
-  if (enText) {
-    speakText(enText, 'en-US', () => {
-      window.speechSequenceTimeout = setTimeout(() => {
-        if (noteText && noteText.trim() !== '') {
-          speakText(noteText, 'vi-VN');
-        }
-      }, 600);
+  if (vnText) {
+    speakText(vnText, 'vi-VN', () => {
+      if (enText) {
+        window.speechSequenceTimeout = setTimeout(() => {
+          speakText(enText, 'en-US');
+        }, 400);
+      }
     });
-  } else if (noteText && noteText.trim() !== '') {
-    speakText(noteText, 'vi-VN');
+  } else if (enText) {
+    speakText(enText, 'en-US');
   }
 }
 
@@ -1866,9 +1868,9 @@ function setupSwipeGestures(cardEl, wordId) {
     isDragging = false;
     cardEl.classList.remove('dragging');
     
-    // Check if it is a single tap (very small displacement)
+    // Check if it is a single tap (small touch movement tolerance)
     const displacement = Math.sqrt(currentX * currentX + currentY * currentY);
-    if (displacement < 8) {
+    if (displacement < 20) {
       const frontElements = cardEl.querySelectorAll('.word-display, .word-ipa, .word-sentence');
       const backElements = cardEl.querySelector('.card-inner-meaning');
       const tipEl = cardEl.querySelector('.flip-tip');
