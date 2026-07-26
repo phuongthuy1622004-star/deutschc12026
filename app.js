@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=30')
+    navigator.serviceWorker.register('./sw.js?v=31')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -1774,12 +1774,15 @@ function renderSwipeCardStack() {
       <div class="swipe-indicator left">Still Learning</div>
       <div class="swipe-indicator up">Learning</div>
       
-      <div class="card-front-wrapper" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+      <div class="card-front-wrapper" style="width: 100%; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #1F2229;">
         ${imageHTML}
         ${typeBadgeHTML}
-        <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
-        <div class="word-ipa">${ipaText}</div>
-        <div class="word-sentence">${word.sentence || ''}</div>
+        <div class="word-display" style="margin-top: 10px; font-size: 32px; font-weight: 800; color: #1F2229; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>${wordText}</span>
+          <button class="audio-btn" data-audio="${wordText}" style="background: none; border: none; font-size: 24px; cursor: pointer;">🔊</button>
+        </div>
+        ${ipaText ? `<div class="word-ipa" style="font-size: 16px; color: #6B7280; margin-top: 4px; margin-bottom: 12px;">${ipaText}</div>` : ''}
+        ${word.sentence ? `<div class="word-sentence" style="font-size: 15px; color: #374151; line-height: 1.5; margin-top: 8px; max-width: 90%; text-align: center;">${word.sentence}</div>` : ''}
       </div>
       
       <div class="card-inner-meaning" style="display: none; text-align: center; margin-top: 15px; width: 100%; animation: slideUp 0.2s ease;">
