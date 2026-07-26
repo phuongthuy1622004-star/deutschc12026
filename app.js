@@ -2654,6 +2654,16 @@ function restoreVocabList() {
 }
 
 function goBackFromStudy() {
+  const targetPage = state.studySourcePage || 'topic-dashboard-page';
+  
+  // If returning to home (vocab-page), no need to restore topic list
+  if (targetPage === 'vocab-page') {
+    state.studySourcePage = null;
+    state.activeSwipe.isDailyTaskMode = false;
+    showPage('vocab-page');
+    return;
+  }
+  
   restoreVocabList();
   
   // Safety check pagination
@@ -2665,7 +2675,7 @@ function goBackFromStudy() {
   document.getElementById('topic-desc-dashboard').textContent = `${state.vocabList.length} words`;
   renderTopicWords();
   
-  const targetPage = state.studySourcePage || 'topic-dashboard-page';
+  state.studySourcePage = null;
   showPage(targetPage);
 }
 
@@ -3695,7 +3705,7 @@ const DailyTaskService = {
   },
   
   saveTask(task) {
-    if (!task) return;
+    if (!task || !task.date) return;  // null guard
     const todayStr = task.date;
     localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(task));
     
@@ -4017,38 +4027,66 @@ function updateDailyTaskUI() {
 }
 
 function startDailyTaskSwipeStudy() {
-  state.activeSwipe.currentIndex = 0;
-  
-  const dailyTask = DailyTaskService.getTodayTask();
-  if (!dailyTask || !dailyTask.word_ids || dailyTask.word_ids.length === 0) {
-    // Regenerate task if cached task was empty
-    const newTask = DailyTaskService.generateTodayTask(state.allVocab);
-    if (!newTask || !newTask.word_ids || newTask.word_ids.length === 0) {
-      alert("Today's task is empty! Come back when you have words to study.");
-      return;
-    }
+  // Safety: allVocab must be loaded
+  if (!state.allVocab || state.allVocab.length === 0) {
+    alert('Vocabulary data is still loading. Please wait a moment and try again.');
+    return;
   }
   
-  const currentTask = DailyTaskService.getTodayTask();
-  const taskWordIds = (currentTask.word_ids || []).map(id => String(id));
+  state.activeSwipe.currentIndex = 0;
+  state.activeSwipe.isDailyTaskMode = true;
+  state.studySourcePage = 'vocab-page';
+  
+  // Get or generate today's task
+  let currentTask = DailyTaskService.getTodayTask();
+  if (!currentTask || !currentTask.word_ids || currentTask.word_ids.length === 0) {
+    currentTask = DailyTaskService.generateTodayTask(state.allVocab);
+  }
+  
+  if (!currentTask || !currentTask.word_ids || currentTask.word_ids.length === 0) {
+    alert("Today's task is empty! All words may already be learned.");
+    return;
+  }
+  
+  // Convert all IDs to string for safe comparison
+  const taskWordIds = currentTask.word_ids.map(id => String(id));
+  
+  // Match words from allVocab — convert both sides to String for comparison
   const activeList = state.allVocab.filter(word => taskWordIds.includes(String(word.id)));
+  
+  if (activeList.length === 0) {
+    // Fallback: task IDs exist but no matching words — likely ID type mismatch
+    // Try regenerating fresh task
+    DailyTaskService.saveTask(null);
+    localStorage.removeItem(`daily_task_${currentTask.date}`);
+    const freshTask = DailyTaskService.generateTodayTask(state.allVocab);
+    if (freshTask && freshTask.word_ids && freshTask.word_ids.length > 0) {
+      const freshIds = freshTask.word_ids.map(id => String(id));
+      const freshList = state.allVocab.filter(w => freshIds.includes(String(w.id)));
+      if (freshList.length > 0) {
+        state.activeSwipe.cards = freshList.sort(() => Math.random() - 0.5);
+        state.vocabList = freshList;
+        updateBackButtonsTarget();
+        showPage('active-study-page');
+        renderSwipeCardStack();
+        return;
+      }
+    }
+    alert("No matching words found. Please check your vocabulary data in Firebase.");
+    return;
+  }
+  
   state.vocabList = activeList;
   
-  // Exclude already swiped cards for today to avoid duplicate work
+  // Exclude already swiped cards (show uncompleted first)
   const completedIds = (currentTask.completed_ids || []).map(id => String(id));
   const uncompletedCards = activeList.filter(word => !completedIds.includes(String(word.id)));
   
-  if (uncompletedCards.length === 0) {
-    // Already swiped all cards, let them review again
-    state.activeSwipe.cards = activeList.sort(() => Math.random() - 0.5);
-  } else {
-    state.activeSwipe.cards = uncompletedCards.sort(() => Math.random() - 0.5);
-  }
+  // If all done today, let user review again
+  state.activeSwipe.cards = (uncompletedCards.length > 0 ? uncompletedCards : activeList)
+    .sort(() => Math.random() - 0.5);
   
-  state.activeSwipe.isDailyTaskMode = true;
-  state.studySourcePage = 'vocab-page';
   updateBackButtonsTarget();
-  
   showPage('active-study-page');
   renderSwipeCardStack();
 }
