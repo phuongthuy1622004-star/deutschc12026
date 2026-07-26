@@ -3701,9 +3701,14 @@ const DailyTaskService = {
     let task = this.getTodayTask();
     if (task) return task; // Already exists
     
-    // Group 1: Max 20 NEW words (sorted by ID to follow numeric sequence)
+    // Group 1: Max 20 NEW words (sorted by numeric/alphabetical ID to follow sequence)
     const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW')
-                             .sort((a, b) => (a.id || '').localeCompare(b.id || ''))
+                             .sort((a, b) => {
+                               const numA = parseInt(a.id);
+                               const numB = parseInt(b.id);
+                               if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                               return String(a.id || '').localeCompare(String(b.id || ''));
+                             })
                              .slice(0, 20);
                              
     // Group 2: All LEARNING words
@@ -3718,9 +3723,9 @@ const DailyTaskService = {
     });
     
     const wordIds = [
-      ...newWords.map(w => w.id),
-      ...learningWords.map(w => w.id),
-      ...reviewWords.map(w => w.id)
+      ...newWords.map(w => String(w.id)),
+      ...learningWords.map(w => String(w.id)),
+      ...reviewWords.map(w => String(w.id))
     ];
     
     task = {
@@ -3757,8 +3762,12 @@ const DailyTaskService = {
       task.completed_ids = [];
     }
     
-    if (task.word_ids.includes(wordId) && !task.completed_ids.includes(wordId)) {
-      task.completed_ids.push(wordId);
+    const strWordId = String(wordId);
+    const taskWordIds = (task.word_ids || []).map(id => String(id));
+    const completedIds = task.completed_ids.map(id => String(id));
+    
+    if (taskWordIds.includes(strWordId) && !completedIds.includes(strWordId)) {
+      task.completed_ids.push(strWordId);
       task.completed_cards = task.completed_ids.length;
       
       if (task.completed_cards >= task.total_cards) {
@@ -3999,17 +4008,23 @@ function startDailyTaskSwipeStudy() {
   state.activeSwipe.currentIndex = 0;
   
   const dailyTask = DailyTaskService.getTodayTask();
-  if (!dailyTask || dailyTask.word_ids.length === 0) {
-    alert("Today's task is empty! Come back when you have words to study.");
-    return;
+  if (!dailyTask || !dailyTask.word_ids || dailyTask.word_ids.length === 0) {
+    // Regenerate task if cached task was empty
+    const newTask = DailyTaskService.generateTodayTask(state.allVocab);
+    if (!newTask || !newTask.word_ids || newTask.word_ids.length === 0) {
+      alert("Today's task is empty! Come back when you have words to study.");
+      return;
+    }
   }
   
-  const activeList = state.allVocab.filter(word => dailyTask.word_ids.includes(word.id));
+  const currentTask = DailyTaskService.getTodayTask();
+  const taskWordIds = (currentTask.word_ids || []).map(id => String(id));
+  const activeList = state.allVocab.filter(word => taskWordIds.includes(String(word.id)));
   state.vocabList = activeList;
   
   // Exclude already swiped cards for today to avoid duplicate work
-  const completedIds = dailyTask.completed_ids || [];
-  const uncompletedCards = activeList.filter(word => !completedIds.includes(word.id));
+  const completedIds = (currentTask.completed_ids || []).map(id => String(id));
+  const uncompletedCards = activeList.filter(word => !completedIds.includes(String(word.id)));
   
   if (uncompletedCards.length === 0) {
     // Already swiped all cards, let them review again
