@@ -2604,16 +2604,22 @@ function renderNotesSection(word, containerElement, onUpdateCallback) {
   notes.forEach((noteText, idx) => {
     const li = document.createElement('li');
     li.style.cursor = 'pointer';
-    li.title = 'Double click to edit note';
-    li.textContent = noteText;
+    li.title = 'Tap ✏️ icon or double click to edit note';
     
-    // Handle Double Click to edit inline
-    li.addEventListener('dblclick', (e) => {
-      e.stopPropagation(); // Stop parent flips
+    const textNode = document.createTextNode(noteText);
+    li.appendChild(textNode);
+
+    const editBtn = document.createElement('span');
+    editBtn.innerHTML = ' ✏️';
+    editBtn.style.cssText = 'font-size: 11px; cursor: pointer; opacity: 0.7; margin-left: 6px; display: inline-block; padding: 2px 4px;';
+    editBtn.title = 'Edit Note';
+
+    const startEditing = (e) => {
+      e.stopPropagation();
       
       const textarea = document.createElement('textarea');
       textarea.value = noteText;
-      textarea.style.cssText = 'width: 100%; font-family: inherit; font-size: 12px; padding: 6px; border: 1px solid var(--primary); border-radius: 6px; outline: none; resize: vertical; margin-top: 4px;';
+      textarea.style.cssText = 'width: 100%; font-family: inherit; font-size: 12px; padding: 6px; border: 1px solid var(--primary); border-radius: 6px; outline: none; resize: vertical; margin-top: 4px; color: var(--text-primary); background: white;';
       
       li.textContent = '';
       li.appendChild(textarea);
@@ -2633,7 +2639,6 @@ function renderNotesSection(word, containerElement, onUpdateCallback) {
         }
         
         if (updatedVal === '') {
-          // Remove note if cleared
           currentNotes.splice(idx, 1);
         } else {
           currentNotes[idx] = updatedVal;
@@ -2651,11 +2656,16 @@ function renderNotesSection(word, containerElement, onUpdateCallback) {
         } else if (evt.key === 'Escape') {
           hasSaved = true;
           li.textContent = noteText;
+          li.appendChild(editBtn);
         }
       });
-    });
+    };
+
+    editBtn.addEventListener('click', startEditing);
+    li.addEventListener('dblclick', startEditing);
     
     list.appendChild(li);
+    li.appendChild(editBtn);
   });
   
   containerElement.appendChild(list);
