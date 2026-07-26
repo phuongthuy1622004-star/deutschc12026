@@ -3419,10 +3419,10 @@ function openStreakGardenModal() {
   // Motivational messages
   const motivationEl = document.getElementById('garden-motivation');
   if (streak === 0) {
-    motivationEl.textContent = '🌱 Study today to plant your first tree!';
+    motivationEl.textContent = '🌱 Study today to restart your streak!';
     motivationEl.style.color = '#B45309';
   } else if (missedDays > 0) {
-    motivationEl.textContent = '⚠️ Keep studying daily to save your garden!';
+    motivationEl.textContent = '⚠️ Keep studying daily to grow your garden!';
     motivationEl.style.color = '#EF4444';
   } else {
     motivationEl.textContent = '🌳 Your garden is thriving! Keep it up!';
@@ -3433,8 +3433,12 @@ function openStreakGardenModal() {
   const bed = document.getElementById('garden-bed');
   bed.innerHTML = '';
   
-  // Calculate tiers for active streak
-  let tempStreak = streak;
+  // Calculate total historical completed days (streak_dates) so green trees are NEVER wiped on streak reset!
+  const streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+  const healthyDaysCount = Math.max(streak, streakDates.length);
+  
+  // Calculate tiers for historical healthy trees
+  let tempStreak = healthyDaysCount;
   const peachTrees = Math.floor(tempStreak / 100);
   tempStreak %= 100;
   const cherryBlossoms = Math.floor(tempStreak / 50);
@@ -3447,15 +3451,15 @@ function openStreakGardenModal() {
   
   // Calculate tiers for missed days (5 milestone levels)
   let tempMissed = missedDays;
-  const deadTombs = Math.floor(tempMissed / 100);
+  const deadGhosts = Math.floor(tempMissed / 100);
   tempMissed %= 100;
   const deadSkulls = Math.floor(tempMissed / 50);
   tempMissed %= 50;
-  const deadCacti = Math.floor(tempMissed / 10);
+  const deadLogs = Math.floor(tempMissed / 10);
   tempMissed %= 10;
-  const deadLogs = Math.floor(tempMissed / 5);
+  const deadLeaves = Math.floor(tempMissed / 5);
   tempMissed %= 5;
-  const deadLeaves = tempMissed;
+  const deadStraws = tempMissed;
   
   // Milestone pools for randomization
   const heartPool = ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝', '🤍', '🤎'];
@@ -3463,12 +3467,13 @@ function openStreakGardenModal() {
   const flowerPool = ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'];
   const treePool = ['🌳', '🌲', '🌴', '🎋'];
 
-  // Dead milestone pools
-  const tombPool = ['🪦', '⚰️', '👻', '🧟'];
-  const skullPool = ['💀', '☠️', '🦴'];
-  const cactusPool = ['🌵', '🪨', '🕸️'];
-  const logPool = ['🪵', '🛖', '🧱'];
-  const leafPool = ['🍂', '🍁', '🥀', '🌾'];
+  // Dead milestone pools matching exact requested icons:
+  // 100m: 👻 Hồn ma, 50m: ☠️ Xương chéo, 10m: 🪵 Gỗ mục, 5m: 🍂 Lá khô, 1m: 🌾 Cỏ khô
+  const ghostPool = ['👻'];
+  const skullPool = ['☠️'];
+  const logPool = ['🪵'];
+  const leafPool = ['🍂'];
+  const strawPool = ['🌾'];
   
   // Build garden items list
   const gardenItems = [];
@@ -3495,24 +3500,24 @@ function openStreakGardenModal() {
   }
   
   // Add dead trees (5 milestone levels)
-  for (let i = 0; i < deadTombs; i++) {
-    const emoji = tombPool[i % tombPool.length];
+  for (let i = 0; i < deadGhosts; i++) {
+    const emoji = ghostPool[i % ghostPool.length];
     gardenItems.push({ type: 'dead', emoji: emoji, label: '100m' });
   }
   for (let i = 0; i < deadSkulls; i++) {
     const emoji = skullPool[i % skullPool.length];
     gardenItems.push({ type: 'dead', emoji: emoji, label: '50m' });
   }
-  for (let i = 0; i < deadCacti; i++) {
-    const emoji = cactusPool[i % cactusPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '10m' });
-  }
   for (let i = 0; i < deadLogs; i++) {
     const emoji = logPool[i % logPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '5m' });
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '10m' });
   }
   for (let i = 0; i < deadLeaves; i++) {
     const emoji = leafPool[i % leafPool.length];
+    gardenItems.push({ type: 'dead', emoji: emoji, label: '5m' });
+  }
+  for (let i = 0; i < deadStraws; i++) {
+    const emoji = strawPool[i % strawPool.length];
     gardenItems.push({ type: 'dead', emoji: emoji, label: '1m' });
   }
   
