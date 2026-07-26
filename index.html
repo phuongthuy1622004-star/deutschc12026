@@ -100,11 +100,14 @@
             <span id="daily-task-status-badge" style="font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; background: #FEF3C7; color: #92400E;">In Progress</span>
           </div>
           
-          <!-- Task 1: Học từ vựng -->
+          <!-- Task 1: Daily Vocabulary (REQUIRED for streak) -->
           <div id="task-vocab-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #3B82F6; border-radius: 12px; padding: 12px; position: relative;">
             <div style="font-size: 20px; background: #DBEAFE; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #2563EB;">📚</div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Daily Vocabulary</div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Daily Vocabulary</div>
+                <span style="font-size: 9px; font-weight: 800; background: #DBEAFE; color: #1D4ED8; border-radius: 6px; padding: 1px 6px; text-transform: uppercase;">Required</span>
+              </div>
               <!-- Progress Bar -->
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
@@ -116,11 +119,14 @@
             <div id="task-vocab-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
           </div>
 
-          <!-- Task 2: Học DW Lesson -->
+          <!-- Task 2: DW Lesson (BONUS - optional) -->
           <div id="task-dw-item" style="display: flex; align-items: center; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #F59E0B; border-radius: 12px; padding: 12px; position: relative;">
             <div style="font-size: 20px; background: #FEF3C7; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #D97706;">⚡</div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Study DW Lesson </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Study DW Lesson</div>
+                <span style="font-size: 9px; font-weight: 800; background: #FEF3C7; color: #92400E; border-radius: 6px; padding: 1px 6px; text-transform: uppercase;">Bonus</span>
+              </div>
               <!-- Progress Bar -->
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="flex: 1; height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
@@ -129,7 +135,7 @@
                 <span id="task-dw-progress-text" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); min-width: 65px; text-align: right;">0 / 10 mins</span>
               </div>
             </div>
-            <div id="task-dw-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⏳</div>
+            <div id="task-dw-status-icon" style="font-size: 16px; font-weight: 700; color: #94A3B8;">⭐</div>
           </div>
           
           <button class="btn-primary" id="btn-start-daily-task" style="width: 100%; margin: 0; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">

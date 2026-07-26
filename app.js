@@ -2794,16 +2794,9 @@ function initUserStats() {
         
         if (task.dw_study_seconds >= task.dw_target_seconds && !task.is_dw_completed) {
           task.is_dw_completed = true;
-          console.log("DW Lesson task completed!");
         }
         
-        // Complete today's daily task if both are finished
-        if (task.is_vocab_completed && task.is_dw_completed && !task.is_completed) {
-          task.is_completed = true;
-          task.completed_at = new Date().toISOString();
-          StreakService.completeDailyTask(todayStr);
-        }
-        
+        // DW lesson is bonus only — streak is already earned via vocab swipe
         DailyTaskService.saveTask(task);
         updateDailyTaskUI();
         updateUserStatsDashboard();
@@ -3644,7 +3637,8 @@ const DailyTaskService = {
         task.dw_target_seconds = 600;
         task.is_dw_completed = false;
         task.is_vocab_completed = task.is_completed || (task.completed_cards >= task.total_cards);
-        task.is_completed = task.is_vocab_completed && task.is_dw_completed;
+        // Streak only requires vocab — migrate is_completed to match
+        task.is_completed = task.is_vocab_completed;
         this.saveTask(task);
       }
     }
@@ -3734,7 +3728,8 @@ const DailyTaskService = {
         task.is_vocab_completed = true;
       }
       
-      if (task.is_vocab_completed && task.is_dw_completed && !task.is_completed) {
+      // Streak only requires vocab flashcard task — DW lesson is optional/bonus
+      if (task.is_vocab_completed && !task.is_completed) {
         task.is_completed = true;
         task.completed_at = new Date().toISOString();
         StreakService.completeDailyTask(todayStr);
