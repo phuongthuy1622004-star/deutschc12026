@@ -15,6 +15,18 @@ window.addEventListener('orientationchange', function() {
   setTimeout(setRealVH, 300); // wait for browser chrome to settle
 });
 
+// Safe string/number comparator to avoid (a.id || '').localeCompare is not a function error
+function safeCompareString(a, b) {
+  const strA = String(a || '');
+  const strB = String(b || '');
+  const numA = parseInt(strA);
+  const numB = parseInt(strB);
+  if (!isNaN(numA) && !isNaN(numB) && String(numA) === strA && String(numB) === strB) {
+    return numA - numB;
+  }
+  return strA.localeCompare(strB);
+}
+
 // GLOBAL ERROR HANDLER FOR EASY PWA DEBUGGING ON MOBILE
 window.onerror = function(message, source, lineno, colno, error) {
   alert(`Error: ${message}\nLine: ${lineno}\nSource: ${source}`);
@@ -534,16 +546,12 @@ function setupEventListeners() {
       resultsSection.style.display = 'block';
       decksSection.style.display = 'none';
       
-      const filtered = state.allVocab.filter(item => 
-        (item.word || '').toLowerCase().includes(term) || 
-        (item.meaning_en || item.meaning || item.meaning_vn || '').toLowerCase().includes(term)
-      );
-      
       // Sort results alphabetically
-      filtered.sort((a, b) => (a.word || '').localeCompare(b.word || ''));
+      filtered.sort((a, b) => safeCompareString(a.word, b.word));
       renderMainSearchResults(filtered);
     }
   });
+
   
   // MODAL CLOSE
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -655,7 +663,7 @@ function setupEventListeners() {
     if (state.passive.settings.isRandom) {
       state.vocabList.sort(() => Math.random() - 0.5);
     } else {
-      state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+      state.vocabList.sort((a,b) => safeCompareString(a.id, b.id));
     }
     
     // Find the index of the word we were on, so we don't jump cards
@@ -817,7 +825,7 @@ function openWordExplorer(filterType, queryValue, titleText) {
   }
   
   // Sort by ID to preserve database sequence
-  filtered.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+  filtered.sort((a,b) => safeCompareString(a.id, b.id));
   
   // Load words into active study list
   state.vocabList = [...filtered];
@@ -936,7 +944,7 @@ function renderTopicWords() {
           updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
         }
         
-        updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+        updatedList.sort((a, b) => safeCompareString(a.id, b.id));
         state.vocabList = [...updatedList];
         
         // Safety check pagination
@@ -1348,7 +1356,7 @@ function renderMainSearchResults(list) {
             (item.word || '').toLowerCase().includes(term) || 
             (item.meaning_en || item.meaning || item.meaning_vn || '').toLowerCase().includes(term)
           );
-          filtered.sort((a, b) => (a.word || '').localeCompare(b.word || ''));
+          filtered.sort((a, b) => safeCompareString(a.word, b.word));
           renderMainSearchResults(filtered);
         }
       }, 200);
@@ -1371,7 +1379,7 @@ function startPassiveStudy() {
   if (state.passive.settings.isRandom) {
     state.vocabList.sort(() => Math.random() - 0.5);
   } else {
-    state.vocabList.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+    state.vocabList.sort((a,b) => safeCompareString(a.id, b.id));
   }
   
   showPage('passive-study-page');
@@ -2638,7 +2646,7 @@ function restoreVocabList() {
     updatedList = state.allVocab.filter(item => item.status === 'not_memorized' || item.status === 'new' || !item.status);
   }
   
-  updatedList.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+  updatedList.sort((a, b) => safeCompareString(a.id, b.id));
   state.vocabList = [...updatedList];
 }
 
