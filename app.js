@@ -3711,6 +3711,9 @@ function loadStatsFromDB(callback) {
       // Generate task if missing
       DailyTaskService.generateTodayTask(state.allVocab);
       updateDailyTaskUI();
+      
+      // Tính lại streak đúng từ streak_dates (sửa giá trị cũ lưu bởi code trước)
+      recalculateStreakFromDates();
       updateUserStatsDashboard();
       
       if (callback) callback();
@@ -4003,8 +4006,9 @@ const StreakService = {
       // Học liên tiếp — tăng streak bình thường
       streak.current_streak += 1;
     } else if (streak.last_completed_date === dayBeforeYesterdayStr) {
-      // Miss đúng 1 ngày — áp dụng grace period: GIỮ NGUYÊN streak, không reset
-      // (không tăng vì ngày bị miss không được tính — streak giữ nguyên)
+      // Miss đúng 1 ngày — grace period: VẪN TĂNG streak bình thường
+      // (ngày miss được "tha thứ", ngày học tiếp theo vẫn cộng +1)
+      streak.current_streak += 1;
     } else if (!streak.last_completed_date) {
       // Lần đầu tiên học
       streak.current_streak = 1;
@@ -4031,6 +4035,47 @@ const StreakService = {
     updateUserStatsDashboard();
   }
 };
+
+// Tính lại current_streak đúng từ mảng streak_dates (có hỗ trợ grace period 1 ngày)
+// Dùng khi dữ liệu streak_dates đã đủ nhưng current_streak bị sai (VD: lưu bởi code cũ)
+function recalculateStreakFromDates() {
+  const streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+  if (streakDates.length === 0) return;
+
+  // Sắp xếp tăng dần
+  const sorted = [...streakDates].sort();
+
+  // Tính streak đúng: duyệt từng ngày, miss 1 ngày không reset, miss 2+ thì reset
+  let calculatedStreak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1]);
+    const curr = new Date(sorted[i]);
+    const diffDays = Math.round((curr - prev) / 86400000);
+    if (diffDays === 1) {
+      // Ngày liên tiếp → tăng bình thường
+      calculatedStreak++;
+    } else if (diffDays === 2) {
+      // Miss đúng 1 ngày → grace period, vẫn tăng
+      calculatedStreak++;
+    } else {
+      // Miss từ 2 ngày trở lên → reset về 1
+      calculatedStreak = 1;
+    }
+  }
+
+  const streak = StreakService.getStreakData();
+  const lastDate = sorted[sorted.length - 1];
+
+  // Chỉ cập nhật nếu calculated khác với stored (tránh ghi không cần thiết)
+  if (streak.current_streak !== calculatedStreak || streak.last_completed_date !== lastDate) {
+    streak.current_streak = calculatedStreak;
+    streak.longest_streak = Math.max(streak.longest_streak || 0, calculatedStreak);
+    streak.last_completed_date = lastDate;
+    StreakService.saveStreakData(streak);
+    console.log(`Streak recalculated từ streak_dates: ${calculatedStreak} (was ${streak.current_streak})`);
+    updateUserStatsDashboard();
+  }
+}
 
 function getTodayDateStringFormatted() {
   const d = new Date();
