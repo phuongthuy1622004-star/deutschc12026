@@ -2822,13 +2822,17 @@ function initUserStats() {
     const diffTime = Math.abs(todayDate - lastDate);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays > 1) {
+    if (diffDays > 2) {
+      // Miss từ 2 ngày trở lên (vượt quá grace period 1 ngày)
       const missedDays = diffDays - 1;
       const dailyGoal = parseInt(localStorage.getItem('daily_goal')) || 5;
       const accumulated = parseInt(localStorage.getItem('accumulated_words')) || 0;
       
       localStorage.setItem('accumulated_words', accumulated + (missedDays * dailyGoal));
       localStorage.setItem('streak_missed_days', missedDays);
+    } else if (diffDays === 2) {
+      // Miss đúng 1 ngày — grace period, không tính vào missed_days
+      localStorage.setItem('streak_missed_days', 0);
     } else {
       localStorage.setItem('streak_missed_days', 0);
     }
@@ -3988,8 +3992,7 @@ const StreakService = {
       streak.current_streak += 1;
     } else if (streak.last_completed_date === dayBeforeYesterdayStr) {
       // Miss đúng 1 ngày — áp dụng grace period: GIỮ NGUYÊN streak, không reset
-      // (không tăng vì ngày bị miss không được tính)
-      streak.current_streak = streak.current_streak; // giữ nguyên
+      // (không tăng vì ngày bị miss không được tính — streak giữ nguyên)
     } else if (!streak.last_completed_date) {
       // Lần đầu tiên học
       streak.current_streak = 1;
