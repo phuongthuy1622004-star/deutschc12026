@@ -1637,7 +1637,7 @@ function navigatePassiveCard(dir) {
     }
     const statusLabel = document.getElementById('autoplay-status-label');
     if (statusLabel) {
-      statusLabel.textContent = '✅ Đã học hết! Nhấn ▶ để phát lại';
+      statusLabel.textContent = 'Thuy Dao 🌸 C1 GOOOOOO';
     }
     // Giữ lại index ở cuối danh sách
     state.passive.currentIndex = state.vocabList.length - 1;
