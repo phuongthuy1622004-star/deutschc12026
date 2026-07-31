@@ -444,6 +444,10 @@ function showPage(pageId) {
   if (state.passive.audioTimeout) {
     clearTimeout(state.passive.audioTimeout);
   }
+  // Rời khỏi Passive page — giải phóng Wake Lock để màn hình tự tắt bình thường
+  if (state.passive.isPlaying) {
+    releaseWakeLock();
+  }
   state.passive.isPlaying = false;
   
   if (state.sprintGame.timerInterval) {
@@ -1623,10 +1627,42 @@ function navigatePassiveCard(dir) {
   }
 }
 
+// SCREEN WAKE LOCK — ngăn iPhone/Android tắt màn hình khi đang Passive
+// Dùng Screen Wake Lock API (hỗ trợ Safari iOS 16.4+)
+let _wakeLock = null;
+
+async function acquireWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', () => {
+        // Hệ thống tự giải phóng (vd: chuyển tab) — cố gắng lấy lại nếu vẫn đang play
+        if (state.passive.isPlaying) {
+          acquireWakeLock();
+        }
+      });
+      console.log('Wake Lock acquired — màn hình sẽ không tự tắt khi Passive đang chạy.');
+    } catch (err) {
+      console.warn('Wake Lock không khả dụng:', err.message);
+    }
+  }
+}
+
+function releaseWakeLock() {
+  if (_wakeLock) {
+    _wakeLock.release().then(() => {
+      _wakeLock = null;
+      console.log('Wake Lock released — màn hình tự tắt bình thường trở lại.');
+    }).catch(err => console.warn('Wake Lock release error:', err));
+  }
+}
+
 function playPassiveStudy() {
   state.passive.isPlaying = true;
   document.getElementById('btn-passive-play').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pause"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>';
   document.getElementById('autoplay-status-label').textContent = 'Autoplay: ON';
+  // Bắt đầu Passive — ngăn màn hình tắt
+  acquireWakeLock();
   runPassiveAutoplayStep();
 }
 
@@ -1634,6 +1670,8 @@ function pausePassiveStudy() {
   state.passive.isPlaying = false;
   document.getElementById('btn-passive-play').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
   document.getElementById('autoplay-status-label').textContent = 'Autoplay: OFF';
+  // Dừng Passive — cho phép màn hình tắt bình thường trở lại
+  releaseWakeLock();
   stopAudioPlayback();
   if (state.passive.timer) clearTimeout(state.passive.timer);
   if (state.passive.audioTimeout) clearTimeout(state.passive.audioTimeout);
@@ -2907,7 +2945,8 @@ function calculateStreak() {
     const todayDate = new Date(todayStr);
     const diffTime = Math.abs(todayDate - lastDate);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 1) {
+    // Reset streak nếu miss từ 2 ngày trở lên (miss 1 ngày được grace period)
+    if (diffDays > 2) {
       streak.current_streak = 0;
       StreakService.saveStreakData(streak);
     }
@@ -3496,99 +3535,76 @@ function openStreakGardenModal() {
     motivationEl.style.color = '#059669';
   }
   
-  // Render garden grid using milestone-based tree tiers (largest first)
+  // Render garden grid theo đúng thứ tự thời gian (streak_dates)
   const bed = document.getElementById('garden-bed');
   bed.innerHTML = '';
   
-  // Calculate total historical completed days (streak_dates) so green trees are NEVER wiped on streak reset!
+  // Lấy danh sách ngày học từ localStorage (đã sort tăng dần theo ngày)
   const streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
-  const healthyDaysCount = Math.max(streak, streakDates.length);
   
-  // Calculate tiers for historical healthy trees
-  let tempStreak = healthyDaysCount;
-  const peachTrees = Math.floor(tempStreak / 100);
-  tempStreak %= 100;
-  const cherryBlossoms = Math.floor(tempStreak / 50);
-  tempStreak %= 50;
-  const oakTrees = Math.floor(tempStreak / 10);
-  tempStreak %= 10;
-  const youngPlants = Math.floor(tempStreak / 5);
-  tempStreak %= 5;
-  const sprouts = tempStreak;
+  // Pools emoji cho từng tier
+  const emojiPools = {
+    100: ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝', '🤍', '🤎'],  // 100d: tim
+    50:  ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'],  // 50d: trái cây
+    10:  ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'],                     // 10d: hoa
+    5:   ['🌳', '🌲', '🌴', '🎋'],                                         // 5d: cây
+    1:   ['🌱']                                                              // 1d: mầm
+  };
   
-  // Calculate tiers for missed days (5 milestone levels)
-  let tempMissed = missedDays;
-  const deadGhosts = Math.floor(tempMissed / 100);
-  tempMissed %= 100;
-  const deadSkulls = Math.floor(tempMissed / 50);
-  tempMissed %= 50;
-  const deadLogs = Math.floor(tempMissed / 10);
-  tempMissed %= 10;
-  const deadLeaves = Math.floor(tempMissed / 5);
-  tempMissed %= 5;
-  const deadStraws = tempMissed;
+  // Dead milestone pools: 100m: 👻, 50m: ☠️, 10m: 🪵, 5m: 🍂, 1m: 🌾
+  const deadPools = {
+    100: ['👻'],
+    50:  ['☠️'],
+    10:  ['🪵'],
+    5:   ['🍂'],
+    1:   ['🌾']
+  };
   
-  // Milestone pools for randomization
-  const heartPool = ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝', '🤍', '🤎'];
-  const fruitPool = ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'];
-  const flowerPool = ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'];
-  const treePool = ['🌳', '🌲', '🌴', '🎋'];
-
-  // Dead milestone pools matching exact requested icons:
-  // 100m: 👻 Hồn ma, 50m: ☠️ Xương chéo, 10m: 🪵 Gỗ mục, 5m: 🍂 Lá khô, 1m: 🌾 Cỏ khô
-  const ghostPool = ['👻'];
-  const skullPool = ['☠️'];
-  const logPool = ['🪵'];
-  const leafPool = ['🍂'];
-  const strawPool = ['🌾'];
-  
-  // Build garden items list
+  // Build danh sách garden items theo đúng thứ tự thời gian
+  // Mỗi slot là 1 ngày học thực tế, emoji quy đổi theo milestone tích lũy
   const gardenItems = [];
+  let runningCount = 0; // đếm số ngày học tích lũy để quy đổi milestone
   
-  // Add healthy trees with deterministic random index mapping based on count
-  for (let i = 0; i < peachTrees; i++) {
-    const emoji = heartPool[i % heartPool.length];
-    gardenItems.push({ type: 'healthy', emoji: emoji, label: '100d' });
-  }
-  for (let i = 0; i < cherryBlossoms; i++) {
-    const emoji = fruitPool[i % fruitPool.length];
-    gardenItems.push({ type: 'healthy', emoji: emoji, label: '50d' });
-  }
-  for (let i = 0; i < oakTrees; i++) {
-    const emoji = flowerPool[i % flowerPool.length];
-    gardenItems.push({ type: 'healthy', emoji: emoji, label: '10d' });
-  }
-  for (let i = 0; i < youngPlants; i++) {
-    const emoji = treePool[i % treePool.length];
-    gardenItems.push({ type: 'healthy', emoji: emoji, label: '5d' });
-  }
-  for (let i = 0; i < sprouts; i++) {
-    gardenItems.push({ type: 'healthy', emoji: '🌱', label: '1d' });
+  for (let i = 0; i < streakDates.length; i++) {
+    runningCount++;
+    // Tính tier của ngày này dựa trên vị trí milestone
+    let tier = 1;
+    let label = '1d';
+    if (runningCount % 100 === 0) { tier = 100; label = '100d'; }
+    else if (runningCount % 50 === 0) { tier = 50; label = '50d'; }
+    else if (runningCount % 10 === 0) { tier = 10; label = '10d'; }
+    else if (runningCount % 5 === 0) { tier = 5; label = '5d'; }
+    
+    const pool = emojiPools[tier];
+    // Dùng index để chọn emoji khác nhau trong cùng tier
+    const tierCount = Math.floor((runningCount - 1) / tier);
+    const emoji = pool[tierCount % pool.length];
+    
+    gardenItems.push({ type: 'healthy', emoji, label, date: streakDates[i] });
   }
   
-  // Add dead trees (5 milestone levels)
-  for (let i = 0; i < deadGhosts; i++) {
-    const emoji = ghostPool[i % ghostPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '100m' });
+  // Thêm dead items (ngày bỏ lỡ) vào cuối — sau tất cả ngày học
+  // Tính số dead items từ missedDays, phân tier tương tự
+  let tempMissed = missedDays;
+  const deadTiers = [100, 50, 10, 5, 1];
+  let deadRunning = 0;
+  for (const dTier of deadTiers) {
+    const count = Math.floor(tempMissed / dTier);
+    tempMissed %= dTier;
+    for (let i = 0; i < count; i++) {
+      deadRunning++;
+      const pool = deadPools[dTier];
+      const emoji = pool[i % pool.length];
+      const label = `${dTier}m`;
+      gardenItems.push({ type: 'dead', emoji, label });
+    }
   }
-  for (let i = 0; i < deadSkulls; i++) {
-    const emoji = skullPool[i % skullPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '50m' });
-  }
-  for (let i = 0; i < deadLogs; i++) {
-    const emoji = logPool[i % logPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '10m' });
-  }
-  for (let i = 0; i < deadLeaves; i++) {
-    const emoji = leafPool[i % leafPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '5m' });
-  }
-  for (let i = 0; i < deadStraws; i++) {
-    const emoji = strawPool[i % strawPool.length];
-    gardenItems.push({ type: 'dead', emoji: emoji, label: '1m' });
+  // Thêm dead 1m còn lại
+  for (let i = 0; i < tempMissed; i++) {
+    gardenItems.push({ type: 'dead', emoji: '🌾', label: '1m' });
   }
   
-  // Compute total slots (minimum 15 slots, grows dynamically in rows of 5)
+  // Tính tổng slot (tối thiểu 15, hàng 5)
   const totalSlots = Math.max(15, Math.ceil(gardenItems.length / 5) * 5);
   
   for (let i = 0; i < totalSlots; i++) {
@@ -3596,9 +3612,11 @@ function openStreakGardenModal() {
     
     if (i < gardenItems.length) {
       const item = gardenItems[i];
+      const dateHint = item.date ? ` title="${item.date}"` : '';
       if (item.type === 'healthy') {
         slot.className = 'garden-slot';
         slot.style.flexDirection = 'column';
+        slot.setAttribute('title', item.date || '');
         slot.innerHTML = `
           <span class="garden-emoji" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15)); line-height: 1.1;">${item.emoji}</span>
           <span style="font-size: 8px; font-weight: 800; color: #047857; margin-top: 1px; text-transform: uppercase;">${item.label}</span>
@@ -3612,7 +3630,7 @@ function openStreakGardenModal() {
         `;
       }
     } else {
-      // Empty soil slot
+      // Ô đất trống
       slot.className = 'garden-slot soil';
       slot.innerHTML = `<span style="font-size: 14px; opacity: 0.15;">🟫</span>`;
     }
@@ -3959,14 +3977,24 @@ const StreakService = {
   completeDailyTask(dateStr) {
     const streak = this.getStreakData();
     
-    // Idempotency: if today was already completed, do nothing
+    // Idempotency: nếu hôm nay đã hoàn thành rồi thì không làm gì
     if (streak.last_completed_date === dateStr) return;
     
     const yesterdayStr = formatDate(new Date(new Date(dateStr) - 86400000));
+    const dayBeforeYesterdayStr = formatDate(new Date(new Date(dateStr) - 2 * 86400000));
     
     if (streak.last_completed_date === yesterdayStr) {
+      // Học liên tiếp — tăng streak bình thường
       streak.current_streak += 1;
+    } else if (streak.last_completed_date === dayBeforeYesterdayStr) {
+      // Miss đúng 1 ngày — áp dụng grace period: GIỮ NGUYÊN streak, không reset
+      // (không tăng vì ngày bị miss không được tính)
+      streak.current_streak = streak.current_streak; // giữ nguyên
+    } else if (!streak.last_completed_date) {
+      // Lần đầu tiên học
+      streak.current_streak = 1;
     } else {
+      // Miss từ 2 ngày trở lên — reset streak về 1 (ngày hôm nay)
       streak.current_streak = 1;
     }
     
@@ -3979,6 +4007,8 @@ const StreakService = {
     let streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
     if (!streakDates.includes(dateStr)) {
       streakDates.push(dateStr);
+      // Giữ đúng thứ tự thời gian
+      streakDates.sort();
       localStorage.setItem('streak_dates', JSON.stringify(streakDates));
       saveStatsToDB();
     }
