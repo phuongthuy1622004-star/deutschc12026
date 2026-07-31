@@ -201,7 +201,12 @@ function initFirebase() {
       .then((snapshot) => {
         const val = snapshot.val();
         if (val) {
-          const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+          // QUAN TRỌNG: Dùng Firebase KEY làm id thực tế (không dùng field 'id' bên trong data)
+          // vì daily_task.word_ids lưu theo Firebase key, không phải field id
+          const list = Object.keys(val).map(key => {
+            const item = val[key];
+            return { ...item, id: key }; // key luôn là chuẩn, ghi đè field id bên trong
+          });
           state.allVocab = list;
           updateStatsFromList(list);
         } else {
@@ -349,7 +354,11 @@ function loadStats() {
     state.db.ref('vocab').once('value').then((snapshot) => {
       const val = snapshot.val();
       if (val) {
-        const list = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+        // QUAN TRỌNG: Dùng Firebase KEY làm id thực tế
+        const list = Object.keys(val).map(key => {
+          const item = val[key];
+          return { ...item, id: key };
+        });
         state.allVocab = list;
         updateStatsFromList(list);
       }
@@ -2921,10 +2930,13 @@ function recordWordLearnedAction(wordId) {
   
   localStorage.setItem('last_active_date', todayStr);
   
-  // Record unique studied word
+  // Ghi nhận từ đã học hôm nay (normalize về string để so sánh nhất quán)
   let todayStudiedIds = JSON.parse(localStorage.getItem('today_studied_ids')) || [];
-  if (!todayStudiedIds.includes(wordId)) {
-    todayStudiedIds.push(wordId);
+  // Đảm bảo tất cả IDs đều là string
+  todayStudiedIds = todayStudiedIds.map(id => String(id));
+  const strWordId = String(wordId);
+  if (!todayStudiedIds.includes(strWordId)) {
+    todayStudiedIds.push(strWordId);
     localStorage.setItem('today_studied_ids', JSON.stringify(todayStudiedIds));
     
     // Decrement accumulated words
