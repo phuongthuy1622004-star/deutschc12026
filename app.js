@@ -3685,19 +3685,45 @@ function openStreakGardenModal() {
 // DATABASE SYNC FOR STREAK & STUDY STATS
 // -------------------------------------------------------------
 function saveStatsToDB() {
-  const stats = {
-    streak_dates: JSON.parse(localStorage.getItem('streak_dates')) || [],
-    streak_missed_days: parseInt(localStorage.getItem('streak_missed_days')) || 0,
-    today_study_seconds: parseInt(localStorage.getItem('today_study_seconds')) || 0,
-    today_studied_ids: JSON.parse(localStorage.getItem('today_studied_ids')) || [],
-    accumulated_words: parseInt(localStorage.getItem('accumulated_words')) || 0,
-    last_active_date: localStorage.getItem('last_active_date') || ''
-  };
+  if (!state.isFirebaseInitialized || !state.db) return;
   
-  if (state.isFirebaseInitialized && state.db) {
+  const localDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+  
+  // Bảo vệ: đọc streak_dates từ Firebase trước, merge để không bao giờ ghi ít hơn
+  state.db.ref('user_stats/streak_dates').once('value').then(snap => {
+    const remoteDates = snap.val() || [];
+    // Union: giữ tất cả ngày từ cả 2 nguồn
+    const merged = [...new Set([...remoteDates, ...localDates])].sort();
+    
+    // Chỉ cập nhật localStorage nếu merge có nhiều hơn
+    if (merged.length > localDates.length) {
+      localStorage.setItem('streak_dates', JSON.stringify(merged));
+    }
+    
+    const stats = {
+      streak_dates: merged,
+      streak_missed_days: parseInt(localStorage.getItem('streak_missed_days')) || 0,
+      today_study_seconds: parseInt(localStorage.getItem('today_study_seconds')) || 0,
+      today_studied_ids: JSON.parse(localStorage.getItem('today_studied_ids')) || [],
+      accumulated_words: parseInt(localStorage.getItem('accumulated_words')) || 0,
+      last_active_date: localStorage.getItem('last_active_date') || ''
+    };
+    
     state.db.ref('user_stats').set(stats)
       .catch(err => console.error('Firebase save stats error:', err));
-  }
+  }).catch(() => {
+    // Nếu không đọc được Firebase, vẫn ghi với dữ liệu local
+    const stats = {
+      streak_dates: localDates,
+      streak_missed_days: parseInt(localStorage.getItem('streak_missed_days')) || 0,
+      today_study_seconds: parseInt(localStorage.getItem('today_study_seconds')) || 0,
+      today_studied_ids: JSON.parse(localStorage.getItem('today_studied_ids')) || [],
+      accumulated_words: parseInt(localStorage.getItem('accumulated_words')) || 0,
+      last_active_date: localStorage.getItem('last_active_date') || ''
+    };
+    state.db.ref('user_stats').set(stats)
+      .catch(err => console.error('Firebase save stats error:', err));
+  });
 }
 
 function loadStatsFromDB(callback) {
@@ -3708,7 +3734,12 @@ function loadStatsFromDB(callback) {
     state.db.ref('user_stats').once('value').then(snapshot => {
       const val = snapshot.val();
       if (val) {
-        localStorage.setItem('streak_dates', JSON.stringify(val.streak_dates || []));
+        // Merge streak_dates: union giữa Firebase và local — không bao giờ mất ngày
+        const remoteDates = val.streak_dates || [];
+        const localDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+        const mergedDates = [...new Set([...remoteDates, ...localDates])].sort();
+        localStorage.setItem('streak_dates', JSON.stringify(mergedDates));
+        
         localStorage.setItem('streak_missed_days', val.streak_missed_days || 0);
         localStorage.setItem('today_study_seconds', val.today_study_seconds || 0);
         localStorage.setItem('today_studied_ids', JSON.stringify(val.today_studied_ids || []));
