@@ -3884,7 +3884,7 @@ const DailyTaskService = {
     let task = this.getTodayTask();
     if (task) return task; // Already exists
     
-    // Group 1: Max 20 NEW words (sorted by numeric/alphabetical ID to follow sequence)
+    // Group 1: Max 28 NEW words (sorted by numeric/alphabetical ID to follow sequence)
     const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW')
                              .sort((a, b) => {
                                const numA = parseInt(a.id);
@@ -3892,7 +3892,7 @@ const DailyTaskService = {
                                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
                                return String(a.id || '').localeCompare(String(b.id || ''));
                              })
-                             .slice(0, 20);
+                             .slice(0, 28);
                              
     // Group 2: All LEARNING words
     const learningWords = allVocab.filter(w => w.status === 'learning' || w.status === 'LEARNING');
