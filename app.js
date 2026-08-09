@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=37')
+    navigator.serviceWorker.register('./sw.js?v=38')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -3719,8 +3719,6 @@ function openStreakGardenModal() {
   }
   
   openModal('streak-garden-modal');
-}
-
 }
 
 // -------------------------------------------------------------
