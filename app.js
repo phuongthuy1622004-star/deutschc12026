@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=38')
+    navigator.serviceWorker.register('./sw.js?v=39')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -191,19 +191,6 @@ function initFirebase() {
     projectId: "deutschc12026"
   };
   
-  // Instant optimistic load from local storage so UI is never 0/blank while waiting for network
-  const localDb = localStorage.getItem('local_vocab');
-  if (localDb) {
-    try {
-      const cachedList = JSON.parse(localDb);
-      if (Array.isArray(cachedList) && cachedList.length > 0) {
-        state.allVocab = cachedList;
-        updateStatsFromList(cachedList);
-        initUserStats();
-      }
-    } catch (e) {}
-  }
-  
   try {
     firebase.initializeApp(config);
     state.db = firebase.database();
@@ -214,14 +201,13 @@ function initFirebase() {
       .then((snapshot) => {
         const val = snapshot.val();
         if (val) {
-          // QUAN TRỌNG: Dùng Firebase KEY làm id thực tế
+          // QUAN TRỌNG: Dùng Firebase KEY làm id thực tế (không dùng field 'id' bên trong data)
+          // vì daily_task.word_ids lưu theo Firebase key, không phải field id
           const list = Object.keys(val).map(key => {
             const item = val[key];
-            return { ...item, id: key };
+            return { ...item, id: key }; // key luôn là chuẩn, ghi đè field id bên trong
           });
           state.allVocab = list;
-          // Lưu cache lại vào localStorage để lần sau mở app có ngay ngay lập tức
-          localStorage.setItem('local_vocab', JSON.stringify(list));
           updateStatsFromList(list);
         } else {
           // Database is empty, seed it
@@ -235,15 +221,11 @@ function initFirebase() {
       })
       .catch(err => {
         console.error('Firebase read error on init:', err);
-        if (!state.allVocab || state.allVocab.length === 0) {
-          loadLocalFallback();
-        }
+        loadLocalFallback();
       });
   } catch (err) {
     console.error('Firebase startup error:', err);
-    if (!state.allVocab || state.allVocab.length === 0) {
-      loadLocalFallback();
-    }
+    loadLocalFallback();
   }
 }
 
