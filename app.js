@@ -3571,7 +3571,7 @@ function openStreakGardenModal() {
     motivationEl.style.color = '#059669';
   }
   
-  // Render garden grid: thự tự thời gian, dead slots xen giỮa đúng chỗ miss
+  // Render garden grid: thứ tự thời gian, gộp ngày liên tiếp thành milestone
   const bed = document.getElementById('garden-bed');
   bed.innerHTML = '';
   
@@ -3579,15 +3579,16 @@ function openStreakGardenModal() {
   const streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
   const sorted = [...streakDates].sort();
   
-  // Pools emoji theo tier liên tiếp
+  // Pools emoji theo tier (cycle qua nếu đạt nhiều lần)
   const emojiPools = {
-    100: ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝'],  // 100 ngày liên tiếp
-    50:  ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'],  // 50 ngày liên tiếp
-    10:  ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'],           // 10 ngày liên tiếp
-    5:   ['🌳', '🌲', '🌴', '🎋'],                               // 5 ngày liên tiếp
-    1:   ['🌱']                                                        // 1 ngày
+    100: ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝'],
+    50:  ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'],
+    10:  ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'],
+    5:   ['🌳', '🌲', '🌴', '🎋'],
+    1:   ['🌱']
   };
-  // Dead pools: icon theo mức nghiêm trọng của khoảng miss
+  
+  // Dead icon theo số ngày bị bỏ
   const deadIconFor = (n) => {
     if (n >= 100) return { emoji: '👻', label: `${n}m` };
     if (n >= 50)  return { emoji: '☠️', label: `${n}m` };
@@ -3596,53 +3597,71 @@ function openStreakGardenModal() {
     return { emoji: '🌾', label: `${n}m` };
   };
   
-  // Xây dựng gardenItems theo thự tự thời gian thực
-  const gardenItems = [];
-  let consecutiveCount = 0; // đếm ngày học liên tiếp HIỆN TẠI (reset khi bỏ ngày)
-  let milestoneGroupCounts = { 100: 0, 50: 0, 10: 0, 5: 0 }; // đếm số lần đạt mỗi tier
+  // Hàm nén 1 chuỗi N ngày liên tiếp thành các milestone slots
+  // 10 ngày = 1 🌸 (không phải 2🌳)
+  // 5 ngày = 1 🌳 (không phải 5🌱)
+  // Phần dư hiển thị 🌱 riêng lẻ
+  const compressRun = (runDates) => {
+    const items = [];
+    const n = runDates.length;
+    let remaining = n;
+    let idx = 0; // con trỏ vào runDates
+    
+    // Đếm số lần dùng từng tier (để chọn emoji khác nhau)
+    const tierUsed = { 100: 0, 50: 0, 10: 0, 5: 0 };
+    
+    // Phân bổ từng tier lớn → nhỏ
+    const tiers = [100, 50, 10, 5];
+    for (const tier of tiers) {
+      const count = Math.floor(remaining / tier);
+      for (let i = 0; i < count; i++) {
+        const pool = emojiPools[tier];
+        const emoji = pool[tierUsed[tier] % pool.length];
+        tierUsed[tier]++;
+        // Ngày đại diện cho milestone này = ngày cuối của nhóm
+        const repDate = runDates[Math.min(idx + tier - 1, runDates.length - 1)];
+        items.push({ type: 'healthy', emoji, label: `${tier}d`, date: repDate });
+        idx += tier;
+      }
+      remaining %= tier;
+    }
+    
+    // Ngày lẻ còn lại → 🌱 riêng lẻ
+    for (let i = 0; i < remaining; i++) {
+      items.push({ type: 'healthy', emoji: '🌱', label: '1d', date: runDates[idx + i] });
+    }
+    
+    return items;
+  };
   
-  for (let i = 0; i < sorted.length; i++) {
-    // Kiểm tra khoảng cách so với ngày trước
-    if (i > 0) {
+  // Tách sorted thành các runs liên tiếp, xen dead slot vào gap
+  const gardenItems = [];
+  let runStart = 0;
+  
+  for (let i = 1; i <= sorted.length; i++) {
+    const isLast = (i === sorted.length);
+    let gapDays = 0;
+    
+    if (!isLast) {
       const prev = new Date(sorted[i - 1]);
       const curr = new Date(sorted[i]);
-      const gapDays = Math.round((curr - prev) / 86400000) - 1; // số ngày bỏ giỮa
+      gapDays = Math.round((curr - prev) / 86400000) - 1;
+    }
+    
+    if (gapDays > 0 || isLast) {
+      // Kết thúc run hiện tại: runStart → i-1
+      const runEnd = isLast ? i : i;
+      const runDates = sorted.slice(runStart, isLast ? i : i);
+      const compressed = compressRun(runDates);
+      compressed.forEach(item => gardenItems.push(item));
       
+      // Thêm dead slot nếu có gap
       if (gapDays > 0) {
-        // Có ngày bỏ → thêm 1 slot dead xen vào đúng chỗ
         const dead = deadIconFor(gapDays);
         gardenItems.push({ type: 'dead', emoji: dead.emoji, label: dead.label });
-        // Reset consecutive vì bỏ ngày (dù grace period vẫn tính là đứt chuỗi cây)
-        consecutiveCount = 0;
-        milestoneGroupCounts = { 100: 0, 50: 0, 10: 0, 5: 0 };
+        runStart = i;
       }
     }
-    
-    // Thêm ngày học
-    consecutiveCount++;
-    
-    // Xác định tier dựa trên số ngày LIÊN TIẼP (không có bỏ ngày nào)
-    let tier = 1;
-    let label = '1d';
-    if (consecutiveCount % 100 === 0) {
-      tier = 100; label = '100d';
-      milestoneGroupCounts[100]++;
-    } else if (consecutiveCount % 50 === 0) {
-      tier = 50; label = '50d';
-      milestoneGroupCounts[50]++;
-    } else if (consecutiveCount % 10 === 0) {
-      tier = 10; label = '10d';
-      milestoneGroupCounts[10]++;
-    } else if (consecutiveCount % 5 === 0) {
-      tier = 5; label = '5d';
-      milestoneGroupCounts[5]++;
-    }
-    
-    const pool = emojiPools[tier];
-    const groupIdx = milestoneGroupCounts[tier] || 0;
-    const emoji = pool[(groupIdx > 0 ? groupIdx - 1 : 0) % pool.length];
-    
-    gardenItems.push({ type: 'healthy', emoji, label, date: sorted[i] });
   }
   
   // Tính tổng slot (tối thiểu 15, hàng 5)
@@ -3679,6 +3698,8 @@ function openStreakGardenModal() {
   }
   
   openModal('streak-garden-modal');
+}
+
 }
 
 // -------------------------------------------------------------
