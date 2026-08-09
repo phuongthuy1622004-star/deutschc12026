@@ -3598,17 +3598,21 @@ function openStreakGardenModal() {
   };
   
   // Hàm nén 1 chuỗi N ngày liên tiếp thành các milestone slots
-  // 10 ngày = 1 🌸 (không phải 2🌳)
-  // 5 ngày = 1 🌳 (không phải 5🌱)
-  // Phần dư hiển thị 🌱 riêng lẻ
   const compressRun = (runDates) => {
     const items = [];
     const n = runDates.length;
     let remaining = n;
     let idx = 0; // con trỏ vào runDates
     
-    // Đếm số lần dùng từng tier (để chọn emoji khác nhau)
-    const tierUsed = { 100: 0, 50: 0, 10: 0, 5: 0 };
+    // Hàm chọn ngẫu nhiên ổn định dựa trên chuỗi ngày
+    const getHashEmoji = (pool, dateStr) => {
+      let hash = 0;
+      for (let k = 0; k < dateStr.length; k++) {
+        hash = (hash << 5) - hash + dateStr.charCodeAt(k);
+        hash |= 0;
+      }
+      return pool[Math.abs(hash) % pool.length];
+    };
     
     // Phân bổ từng tier lớn → nhỏ
     const tiers = [100, 50, 10, 5];
@@ -3616,10 +3620,9 @@ function openStreakGardenModal() {
       const count = Math.floor(remaining / tier);
       for (let i = 0; i < count; i++) {
         const pool = emojiPools[tier];
-        const emoji = pool[tierUsed[tier] % pool.length];
-        tierUsed[tier]++;
         // Ngày đại diện cho milestone này = ngày cuối của nhóm
         const repDate = runDates[Math.min(idx + tier - 1, runDates.length - 1)];
+        const emoji = getHashEmoji(pool, repDate + "_" + tier + "_" + i);
         items.push({ type: 'healthy', emoji, label: `${tier}d`, date: repDate });
         idx += tier;
       }
