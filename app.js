@@ -4400,13 +4400,17 @@ function initTestVideoSection() {
   }
 
   // Helper to show player with a video ID
+  // Uses youtube-nocookie.com to reduce tracking + avoid some embed restrictions
   function showPlayer(videoId, title, listId) {
     if (!iframe || !playerWrapper) return;
-    // Add origin= so YouTube recognises the hosting domain and allows embed
-    const origin = encodeURIComponent(location.origin || 'https://phuongthuy1622004-star.github.io');
-    let src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&origin=${origin}`;
-    if (listId) src += `&list=${listId}`;
-    iframe.src = src;
+    const params = new URLSearchParams({
+      rel: '0',
+      modestbranding: '1',
+      fs: '1',
+      enablejsapi: '1'
+    });
+    if (listId) params.set('list', listId);
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
     playerWrapper.style.display = 'block';
     const titleEl = document.getElementById('test-video-current-title');
     const ytLink = document.getElementById('test-video-open-yt');
@@ -4440,9 +4444,9 @@ function initTestVideoSection() {
       if (videoId) {
         showPlayer(videoId, '▶ ' + url, listId);
       } else if (listId) {
-        // Playlist-only URL — embed as videoseries
+        // Playlist-only URL — embed as videoseries using nocookie domain
         if (!iframe || !playerWrapper) return;
-        iframe.src = `https://www.youtube.com/embed/videoseries?list=${listId}&autoplay=1`;
+        iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&rel=0&modestbranding=1`;
         playerWrapper.style.display = 'block';
         const titleEl = document.getElementById('test-video-current-title');
         const ytLink = document.getElementById('test-video-open-yt');
