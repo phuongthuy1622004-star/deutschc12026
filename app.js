@@ -4348,7 +4348,30 @@ function initTestVideoSection() {
   // Prevent duplicate binding
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
-  
+
+  // Force update button: unregister SW + clear cache + hard reload
+  const forceUpdateBtn = document.getElementById('btn-force-update-test');
+  if (forceUpdateBtn) {
+    forceUpdateBtn.addEventListener('click', async () => {
+      forceUpdateBtn.textContent = '⏳ Đang cập nhật...';
+      forceUpdateBtn.disabled = true;
+      try {
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) await reg.unregister();
+        }
+        // Delete all caches
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (const k of keys) await caches.delete(k);
+        }
+      } catch(e) { /* ignore */ }
+      // Hard reload
+      location.reload(true);
+    });
+  }
+
   // Load saved scratchpad notes
   if (scratchpad) {
     scratchpad.value = localStorage.getItem('test_scratchpad_answers') || '';
@@ -4379,7 +4402,9 @@ function initTestVideoSection() {
   // Helper to show player with a video ID
   function showPlayer(videoId, title, listId) {
     if (!iframe || !playerWrapper) return;
-    let src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    // Add origin= so YouTube recognises the hosting domain and allows embed
+    const origin = encodeURIComponent(location.origin || 'https://phuongthuy1622004-star.github.io');
+    let src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&origin=${origin}`;
     if (listId) src += `&list=${listId}`;
     iframe.src = src;
     playerWrapper.style.display = 'block';
