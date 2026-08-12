@@ -4428,10 +4428,6 @@ function initTestVideoSection() {
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
 
-  const audioEl = document.getElementById('direct-audio-element');
-  const titleEl = document.getElementById('direct-audio-title');
-  const subtitleEl = document.getElementById('direct-audio-subtitle');
-
   // Force update button
   const forceUpdateBtn = document.getElementById('btn-force-update-test');
   if (forceUpdateBtn) {
@@ -4452,56 +4448,63 @@ function initTestVideoSection() {
     });
   }
 
-  // Cách 1: Chọn file MP3 từ thiết bị điện thoại/máy tính
-  const btnPickLocal = document.getElementById('btn-pick-local-audio');
-  const inputLocalFile = document.getElementById('local-audio-file-input');
-
-  if (btnPickLocal && inputLocalFile && audioEl) {
-    btnPickLocal.addEventListener('click', () => {
-      inputLocalFile.click();
-    });
-
-    inputLocalFile.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-
-      // Create blob URL for local file
-      const blobUrl = URL.createObjectURL(file);
-      audioEl.src = blobUrl;
-      audioEl.play().catch(err => console.warn('Autoplay prevented:', err));
-
-      if (titleEl) titleEl.textContent = '🎧 ' + file.name;
-      if (subtitleEl) subtitleEl.textContent = `Đã nạp thành công • Kích thước: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-    });
+  // Helper: parse video ID from any YouTube URL
+  function parseYouTubeId(url) {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(url.trim()) ? url.trim() : null);
   }
 
-  // Cách 2: Dán link MP3 hoặc link Google Drive
-  const btnCustomLink = document.getElementById('btn-play-custom-audio-link');
-  const inputCustomLink = document.getElementById('custom-audio-url-input');
+  // Helper: swap iframe src with new video, NO enablejsapi, NO origin
+  function loadInIframe(videoId, title) {
+    const iframe = document.getElementById('static-yt-iframe');
+    const titleEl = document.getElementById('static-yt-title');
+    if (!iframe) return;
+    // Use youtube-nocookie.com to reduce tracking restrictions + referrerpolicy already in HTML
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0`;
+    if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
+    iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
-  if (btnCustomLink && inputCustomLink && audioEl) {
-    const handleLoadLink = () => {
-      let url = inputCustomLink.value.trim();
+  // Custom YouTube URL input — change iframe src
+  const btnCustom = document.getElementById('btn-play-custom-youtube');
+  const inputCustom = document.getElementById('custom-youtube-url');
+  if (btnCustom && inputCustom) {
+    const handlePlay = () => {
+      const url = inputCustom.value.trim();
       if (!url) return;
-
-      // Convert Google Drive view link to direct download/stream link
-      const driveMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) || url.match(/[?&]id=([A-Za-z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      const videoId = parseYouTubeId(url);
+      if (videoId) {
+        loadInIframe(videoId, '▶ ' + url);
+      } else {
+        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
       }
-
-      audioEl.src = url;
-      audioEl.play().catch(err => {
-        alert('Không thể tự động phát. Vui lòng bấm nút Play trên thanh điều khiển.');
-      });
-
-      if (titleEl) titleEl.textContent = '🎧 Audio từ Link Web / Drive';
-      if (subtitleEl) subtitleEl.textContent = 'Đã nạp link audio thành công';
     };
-
-    btnCustomLink.addEventListener('click', handleLoadLink);
-    inputCustomLink.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLoadLink(); });
+    btnCustom.addEventListener('click', handlePlay);
+    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
   }
+
+  // Render video list cards
+  const grid = document.getElementById('test-videos-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  TEST_VIDEOS_DATA.forEach(item => {
+    const videoId = parseYouTubeId(item.ytUrl) || '';
+    const card = document.createElement('div');
+    card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow 0.15s;';
+    card.innerHTML = `
+      <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" 
+           style="width:72px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;background:#0F172A;" 
+           loading="lazy" alt="">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${item.title}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">${item.levelLabel} · ${item.duration}</div>
+      </div>
+      <span style="font-size:18px;flex-shrink:0;">▶</span>
+    `;
+    card.addEventListener('click', () => loadInIframe(videoId, item.title));
+    card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
+    card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
+    grid.appendChild(card);
+  });
 }
-
-
