@@ -4425,14 +4425,12 @@ function playYTVideo(videoId, listId, title, ytHref) {
 }
 
 function initTestVideoSection() {
-  const grid = document.getElementById('test-videos-grid');
-  if (!grid) return;
-  
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
 
-  // Load YouTube IFrame API script
-  loadYTAPI();
+  const audioEl = document.getElementById('direct-audio-element');
+  const titleEl = document.getElementById('direct-audio-title');
+  const subtitleEl = document.getElementById('direct-audio-subtitle');
 
   // Force update button
   const forceUpdateBtn = document.getElementById('btn-force-update-test');
@@ -4454,89 +4452,56 @@ function initTestVideoSection() {
     });
   }
 
-  // Close YT API player
-  const closeBtn = document.getElementById('btn-yt-api-close');
-  const playerWrapper = document.getElementById('yt-api-player-wrapper');
-  if (closeBtn && playerWrapper) {
-    closeBtn.addEventListener('click', () => {
-      if (_ytPlayer && typeof _ytPlayer.stopVideo === 'function') {
-        _ytPlayer.stopVideo();
-      }
-      playerWrapper.style.display = 'none';
+  // Cách 1: Chọn file MP3 từ thiết bị điện thoại/máy tính
+  const btnPickLocal = document.getElementById('btn-pick-local-audio');
+  const inputLocalFile = document.getElementById('local-audio-file-input');
+
+  if (btnPickLocal && inputLocalFile && audioEl) {
+    btnPickLocal.addEventListener('click', () => {
+      inputLocalFile.click();
+    });
+
+    inputLocalFile.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      // Create blob URL for local file
+      const blobUrl = URL.createObjectURL(file);
+      audioEl.src = blobUrl;
+      audioEl.play().catch(err => console.warn('Autoplay prevented:', err));
+
+      if (titleEl) titleEl.textContent = '🎧 ' + file.name;
+      if (subtitleEl) subtitleEl.textContent = `Đã nạp thành công • Kích thước: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
     });
   }
 
-  // Custom YouTube URL input
-  const btnCustom = document.getElementById('btn-play-custom-youtube');
-  const inputCustom = document.getElementById('custom-youtube-url');
-  if (btnCustom && inputCustom) {
-    const handlePlay = () => {
-      const url = inputCustom.value.trim();
+  // Cách 2: Dán link MP3 hoặc link Google Drive
+  const btnCustomLink = document.getElementById('btn-play-custom-audio-link');
+  const inputCustomLink = document.getElementById('custom-audio-url-input');
+
+  if (btnCustomLink && inputCustomLink && audioEl) {
+    const handleLoadLink = () => {
+      let url = inputCustomLink.value.trim();
       if (!url) return;
-      const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
-      let videoId = videoMatch ? videoMatch[1] : (/^[A-Za-z0-9_-]{11}$/.test(url) ? url : null);
-      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
-      const listId = listMatch ? listMatch[1] : null;
 
-      if (videoId) {
-        const ytHref = listId ? `https://www.youtube.com/watch?v=${videoId}&list=${listId}` : `https://www.youtube.com/watch?v=${videoId}`;
-        playYTVideo(videoId, listId, '▶ ' + url, ytHref);
-      } else if (listId) {
-        playYTVideo('', listId, '▶ Playlist YouTube', url);
-      } else {
-        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
+      // Convert Google Drive view link to direct download/stream link
+      const driveMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) || url.match(/[?&]id=([A-Za-z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
       }
-    };
-    btnCustom.addEventListener('click', handlePlay);
-    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
-  }
 
-  // Render exam deck cards
-  function renderExamList(levelFilter = 'all') {
-    grid.innerHTML = '';
-    const filtered = TEST_VIDEOS_DATA.filter(item => levelFilter === 'all' || item.level === levelFilter);
-    filtered.forEach(item => {
-      const card = document.createElement('div');
-      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow 0.15s;';
-      card.innerHTML = `
-        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎬</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} · Video YouTube</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};">${item.levelLabel}</span>
-          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Xem ngay</span>
-        </div>
-      `;
-      card.addEventListener('click', () => {
-        const videoMatch = item.ytUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-        const videoId = videoMatch ? videoMatch[1] : '';
-        const listMatch = item.ytUrl.match(/[?&]list=([A-Za-z0-9_-]+)/);
-        const listId = listMatch ? listMatch[1] : null;
-        playYTVideo(videoId, listId, item.title, item.ytUrl);
+      audioEl.src = url;
+      audioEl.play().catch(err => {
+        alert('Không thể tự động phát. Vui lòng bấm nút Play trên thanh điều khiển.');
       });
-      card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
-      card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
-      grid.appendChild(card);
-    });
-    if (filtered.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có video cho cấp độ này</div>';
-    }
-  }
 
-  const filterContainer = document.getElementById('test-level-filters');
-  if (filterContainer) {
-    filterContainer.addEventListener('click', (e) => {
-      const btn = e.target.closest('.segment-btn');
-      if (btn) {
-        filterContainer.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderExamList(btn.getAttribute('data-level'));
-      }
-    });
-  }
+      if (titleEl) titleEl.textContent = '🎧 Audio từ Link Web / Drive';
+      if (subtitleEl) subtitleEl.textContent = 'Đã nạp link audio thành công';
+    };
 
-  renderExamList('all');
+    btnCustomLink.addEventListener('click', handleLoadLink);
+    inputCustomLink.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLoadLink(); });
+  }
 }
+
 
