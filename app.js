@@ -4276,95 +4276,86 @@ function startDailyTaskSwipeStudy() {
 }
 
 // -------------------------------------------------------------
-// TEST & EXAM PRACTICE AUDIO & VIDEO HUB
-// HTML5 Audio Player + Speed Adjuster (0.8x, 1.0x, 1.2x) + Exam Tracks
+// iOS PWA SPEECH & HTML5 AUDIO UNLOCKER
 // -------------------------------------------------------------
-const TEST_AUDIO_DATA = [
-  // ── B1 ─────────────────────────────────────────────────────
+// iOS PWA SPEECH UNLOCKER
+// iOS requires a synchronous user gesture to unlock Spee// -------------------------------------------------------------
+// TEST & EXAM PRACTICE AUDIO HUB (IN-APP HÖREN PLAYER & EXAM TIMER)
+// -------------------------------------------------------------
+const TEST_VIDEOS_DATA = [
   {
-    id: 'a_b1_01',
-    audioUrl: 'https://raw.githubusercontent.com/phuongthuy1622004-star/deutschc12026/main/audio_sample_b1.mp3', // Direct audio fallback
+    id: 'b1_01',
+    title: 'Goethe B1 Hören – Modelltest 01 (Teil 1–4)',
+    level: 'b1',
+    levelLabel: 'GOETHE B1',
+    duration: '35:00',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
     ytUrl: 'https://www.youtube.com/watch?v=xNfRxP9Y14o&list=PLbDMpBQZMplVZ8511hhuZZ36uSk_Ocpav',
-    title: 'Goethe B1 Hören – Modelltest 01 (Teil 1–4 mit Lösungen)',
-    level: 'b1',
-    levelLabel: 'Goethe B1',
-    channel: 'Goethe-Zertifikat B1',
-    duration: 'Full Test (Teil 1–4)',
-    icon: '🎧',
-    badgeBg: '#E0E7FF',
-    badgeColor: '#3730A3'
+    badgeBg: 'rgba(59,130,246,0.2)',
+    badgeColor: '#60A5FA',
+    examTimeMinutes: 35
   },
   {
-    id: 'a_b1_02',
-    audioUrl: '',
-    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B1+H%C3%B6ren+Modelltest',
-    title: 'Goethe B1 Hören – Bài nghe tổng hợp & Đáp án',
-    level: 'b1',
-    levelLabel: 'Goethe B1',
-    channel: 'Learn German 303',
-    duration: 'Nhiều bài test',
-    icon: '🔊',
-    badgeBg: '#E0E7FF',
-    badgeColor: '#3730A3'
-  },
-  // ── B2 ─────────────────────────────────────────────────────
-  {
-    id: 'a_b2_01',
-    audioUrl: '',
-    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B2+H%C3%B6ren+Modelltest',
-    title: 'Goethe B2 Hören – Modelltest Teil 1, 2, 3, 4',
+    id: 'b2_01',
+    title: 'Goethe & Telc B2 Hören – Modelltest 01',
     level: 'b2',
-    levelLabel: 'Goethe B2',
-    channel: 'Goethe B2 Exam Prep',
-    duration: 'Bài thi B2 chuẩn',
-    icon: '🎙️',
-    badgeBg: '#F3E8FF',
-    badgeColor: '#6B21A8'
+    levelLabel: 'GOETHE B2',
+    duration: '40:00',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B2+H%C3%B6ren+Modelltest',
+    badgeBg: 'rgba(168,85,247,0.2)',
+    badgeColor: '#C084FC',
+    examTimeMinutes: 40
   },
-  // ── C1 ─────────────────────────────────────────────────────
   {
-    id: 'a_c1_01',
-    audioUrl: '',
-    ytUrl: 'https://www.youtube.com/results?search_query=Telc+C1+H%C3%B6ren+Modelltest',
-    title: 'Telc & Goethe C1 Hören Trainer',
+    id: 'c1_01',
+    title: 'Telc & Goethe C1 Hören – Trainer 01',
     level: 'c1',
-    levelLabel: 'C1 / Telc C1',
-    channel: 'C1 Exam Prep',
-    duration: 'Bài thi C1 Nâng cao',
-    icon: '🏆',
-    badgeBg: '#FCE7F3',
-    badgeColor: '#9D174D'
+    levelLabel: 'C1 / TELC C1',
+    duration: '40:00',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    ytUrl: 'https://www.youtube.com/results?search_query=Telc+C1+H%C3%B6ren+Modelltest',
+    badgeBg: 'rgba(236,72,153,0.2)',
+    badgeColor: '#F472B6',
+    examTimeMinutes: 40
   },
-  // ── A1/A2 ───────────────────────────────────────────────────
   {
-    id: 'a_a1_01',
-    audioUrl: '',
-    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A1+A2+H%C3%B6ren+Modelltest',
-    title: 'Goethe A1 / A2 Hören – Start Deutsch 1 & 2',
+    id: 'a1_01',
+    title: 'Goethe-Zertifikat A1 Hören – Start Deutsch 1',
     level: 'a1a2',
-    levelLabel: 'A1 / A2',
-    channel: 'Start Deutsch',
-    duration: 'Luyện nghe A1-A2',
-    icon: '🌱',
-    badgeBg: '#DBEAFE',
-    badgeColor: '#1E40AF'
+    levelLabel: 'GOETHE A1',
+    duration: '20:00',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A1+H%C3%B6ren+Modelltest',
+    badgeBg: 'rgba(245,158,11,0.2)',
+    badgeColor: '#FBBF24',
+    examTimeMinutes: 20
   }
 ];
 
 let _testSectionInitialized = false;
+let _examTimerInterval = null;
+let _examTimerSeconds = 35 * 60;
+let _examTimerRunning = false;
+
+function formatSeconds(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 function initTestVideoSection() {
   const grid = document.getElementById('test-videos-grid');
-  const audioElement = document.getElementById('test-audio-element');
+  const audioEl = document.getElementById('exam-audio-element');
   const scratchpad = document.getElementById('test-scratchpad-input');
   
-  if (!grid) return;
+  if (!grid || !audioEl) return;
   
   // Prevent duplicate binding
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
 
-  // Force update button: unregister SW + clear cache + hard reload
+  // Force update button
   const forceUpdateBtn = document.getElementById('btn-force-update-test');
   if (forceUpdateBtn) {
     forceUpdateBtn.addEventListener('click', async () => {
@@ -4384,7 +4375,7 @@ function initTestVideoSection() {
     });
   }
 
-  // Load saved scratchpad notes
+  // Scratchpad storage
   if (scratchpad) {
     scratchpad.value = localStorage.getItem('test_scratchpad_answers') || '';
     scratchpad.addEventListener('input', () => {
@@ -4395,122 +4386,234 @@ function initTestVideoSection() {
   const clearBtn = document.getElementById('btn-clear-scratchpad');
   if (clearBtn && scratchpad) {
     clearBtn.addEventListener('click', () => {
-      if (confirm('Bạn có muốn xóa toàn bộ nháp đáp án?')) {
+      if (confirm('Bạn có muốn xóa toàn bộ tờ điền đáp án?')) {
         scratchpad.value = '';
         localStorage.setItem('test_scratchpad_answers', '');
       }
     });
   }
 
-  // Helper to load and play audio in HTML5 player
-  function playAudioTrack(track) {
-    if (!audioElement) return;
-    
-    const titleEl = document.getElementById('test-audio-current-title');
-    const subEl = document.getElementById('test-audio-current-subtitle');
-    const iconEl = document.getElementById('audio-track-icon');
-    
-    if (titleEl) titleEl.textContent = track.title;
-    if (subEl) subEl.textContent = `${track.channel} • ${track.duration}`;
-    if (iconEl && track.icon) iconEl.textContent = track.icon;
+  // Audio Play / Pause controls
+  const btnPlayPause = document.getElementById('btn-audio-play-pause');
+  const progressBar = document.getElementById('exam-audio-progress');
+  const timeCurrent = document.getElementById('exam-audio-time-current');
+  const timeDuration = document.getElementById('exam-audio-time-duration');
+  const btnSkipBack = document.getElementById('btn-audio-skip-back');
+  const btnSkipFwd = document.getElementById('btn-audio-skip-fwd');
 
-    if (track.audioUrl) {
-      audioElement.src = track.audioUrl;
-      audioElement.play().catch(() => {});
-    } else if (track.ytUrl) {
-      // If no direct MP3, open YouTube link nicely in new tab while keeping scratchpad ready
-      window.open(track.ytUrl, '_blank');
-    }
+  if (btnPlayPause) {
+    btnPlayPause.addEventListener('click', () => {
+      if (!audioEl.src) {
+        loadTrack(TEST_VIDEOS_DATA[0]);
+      }
+      if (audioEl.paused) {
+        audioEl.play().then(() => {
+          btnPlayPause.textContent = '❚❚';
+        }).catch(err => {
+          alert('Không thể phát file audio này: ' + err.message);
+        });
+      } else {
+        audioEl.pause();
+        btnPlayPause.textContent = '▶';
+      }
+    });
   }
 
-  // Speed adjusters (0.8x, 1.0x, 1.2x)
-  const speedBtns = document.querySelectorAll('.audio-speed-btn');
+  if (btnSkipBack) {
+    btnSkipBack.addEventListener('click', () => {
+      audioEl.currentTime = Math.max(0, audioEl.currentTime - 5);
+    });
+  }
+
+  if (btnSkipFwd) {
+    btnSkipFwd.addEventListener('click', () => {
+      audioEl.currentTime = Math.min(audioEl.duration || 0, audioEl.currentTime + 5);
+    });
+  }
+
+  audioEl.addEventListener('timeupdate', () => {
+    if (!isNaN(audioEl.duration) && audioEl.duration > 0) {
+      const pct = (audioEl.currentTime / audioEl.duration) * 100;
+      if (progressBar) progressBar.value = pct;
+      if (timeCurrent) timeCurrent.textContent = formatSeconds(audioEl.currentTime);
+      if (timeDuration) timeDuration.textContent = formatSeconds(audioEl.duration);
+    }
+  });
+
+  audioEl.addEventListener('ended', () => {
+    if (btnPlayPause) btnPlayPause.textContent = '▶';
+    if (progressBar) progressBar.value = 0;
+  });
+
+  if (progressBar) {
+    progressBar.addEventListener('input', () => {
+      if (!isNaN(audioEl.duration) && audioEl.duration > 0) {
+        audioEl.currentTime = (progressBar.value / 100) * audioEl.duration;
+      }
+    });
+  }
+
+  // Speed controls (0.8x, 1.0x, 1.2x)
+  const speedBtns = document.querySelectorAll('#exam-speed-controls .btn-speed');
   speedBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const speed = parseFloat(btn.getAttribute('data-speed')) || 1.0;
-      if (audioElement) audioElement.playbackRate = speed;
-      
       speedBtns.forEach(b => {
         b.classList.remove('active');
-        b.style.background = 'white';
-        b.style.color = '#334155';
-        b.style.borderColor = '#CBD5E1';
+        b.style.background = 'rgba(255,255,255,0.06)';
+        b.style.color = '#94A3B8';
       });
       btn.classList.add('active');
-      btn.style.background = 'var(--primary)';
+      btn.style.background = 'rgba(255,255,255,0.2)';
       btn.style.color = 'white';
-      btn.style.borderColor = 'var(--primary)';
+      const speed = parseFloat(btn.getAttribute('data-speed')) || 1.0;
+      audioEl.playbackRate = speed;
     });
   });
 
-  // Rewind -5s and Forward +5s
-  const btnRewind = document.getElementById('btn-audio-rewind');
-  const btnForward = document.getElementById('btn-audio-forward');
-  if (btnRewind && audioElement) {
-    btnRewind.addEventListener('click', () => {
-      audioElement.currentTime = Math.max(0, audioElement.currentTime - 5);
-    });
+  // Countdown Exam Timer Controls
+  const timerDisplay = document.getElementById('exam-timer-display');
+  const btnTimerToggle = document.getElementById('btn-timer-toggle');
+  const btnTimerReset = document.getElementById('btn-timer-reset');
+
+  function updateTimerUI() {
+    if (timerDisplay) timerDisplay.textContent = formatSeconds(_examTimerSeconds);
   }
-  if (btnForward && audioElement) {
-    btnForward.addEventListener('click', () => {
-      audioElement.currentTime = Math.min(audioElement.duration || 9999, audioElement.currentTime + 5);
+
+  if (btnTimerToggle) {
+    btnTimerToggle.addEventListener('click', () => {
+      if (_examTimerRunning) {
+        clearInterval(_examTimerInterval);
+        _examTimerRunning = false;
+        btnTimerToggle.textContent = '▶ Chạy';
+        btnTimerToggle.style.background = '#0284C7';
+      } else {
+        _examTimerRunning = true;
+        btnTimerToggle.textContent = '❚❚ Tạm dừng';
+        btnTimerToggle.style.background = '#D97706';
+        _examTimerInterval = setInterval(() => {
+          if (_examTimerSeconds > 0) {
+            _examTimerSeconds--;
+            updateTimerUI();
+          } else {
+            clearInterval(_examTimerInterval);
+            _examTimerRunning = false;
+            btnTimerToggle.textContent = '▶ Chạy';
+            btnTimerToggle.style.background = '#0284C7';
+            alert('⏰ Hết giờ làm bài thi Hören!');
+          }
+        }, 1000);
+      }
     });
   }
 
-  // Custom Audio MP3 URL submit listener
-  const btnCustomAudio = document.getElementById('btn-play-custom-audio');
+  if (btnTimerReset) {
+    btnTimerReset.addEventListener('click', () => {
+      clearInterval(_examTimerInterval);
+      _examTimerRunning = false;
+      if (btnTimerToggle) {
+        btnTimerToggle.textContent = '▶ Chạy';
+        btnTimerToggle.style.background = '#0284C7';
+      }
+      _examTimerSeconds = 35 * 60;
+      updateTimerUI();
+    });
+  }
+
+  // Load custom audio MP3 link
+  const btnCustomAudio = document.getElementById('btn-load-custom-audio');
   const inputCustomAudio = document.getElementById('custom-audio-url');
   if (btnCustomAudio && inputCustomAudio) {
-    const handlePlayAudio = () => {
+    btnCustomAudio.addEventListener('click', () => {
       const url = inputCustomAudio.value.trim();
       if (!url) return;
-      playAudioTrack({
-        title: '▶ Audio Tùy chỉnh: ' + url.split('/').pop().substring(0, 30),
-        channel: 'Link tùy chỉnh',
-        duration: 'Audio MP3',
+      
+      loadTrack({
+        title: 'Audio tùy chỉnh: ' + url.substring(url.lastIndexOf('/') + 1),
+        levelLabel: 'CUSTOM AUDIO',
+        badgeBg: 'rgba(245,158,11,0.2)',
+        badgeColor: '#FBBF24',
         audioUrl: url,
-        icon: '🎵'
+        ytUrl: url,
+        examTimeMinutes: 30
       });
-    };
-    btnCustomAudio.addEventListener('click', handlePlayAudio);
-    inputCustomAudio.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlayAudio(); });
+    });
   }
 
-  // Render audio exam tracks
-  function renderVideos(levelFilter = 'all') {
+  // Load Track Function
+  function loadTrack(item) {
+    audioEl.src = item.audioUrl;
+    audioEl.load();
+    if (btnPlayPause) btnPlayPause.textContent = '▶';
+    if (timeCurrent) timeCurrent.textContent = '00:00';
+    if (timeDuration) timeDuration.textContent = item.duration || '--:--';
+
+    const titleEl = document.getElementById('exam-audio-title');
+    const badgeEl = document.getElementById('exam-audio-badge');
+    const ytLink = document.getElementById('btn-open-yt-video');
+
+    if (titleEl) titleEl.textContent = item.title;
+    if (badgeEl) {
+      badgeEl.textContent = item.levelLabel;
+      badgeEl.style.background = item.badgeBg;
+      badgeEl.style.color = item.badgeColor;
+    }
+    if (ytLink) ytLink.href = item.ytUrl || '#';
+
+    // Reset timer to track's exam time
+    if (item.examTimeMinutes) {
+      clearInterval(_examTimerInterval);
+      _examTimerRunning = false;
+      if (btnTimerToggle) {
+        btnTimerToggle.textContent = '▶ Chạy';
+        btnTimerToggle.style.background = '#0284C7';
+      }
+      _examTimerSeconds = item.examTimeMinutes * 60;
+      updateTimerUI();
+    }
+
+    // Scroll to player box
+    const playerBox = document.getElementById('exam-audio-title');
+    if (playerBox) playerBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Render Exam Decks List
+  function renderExamList(levelFilter = 'all') {
     grid.innerHTML = '';
     
-    const filtered = TEST_AUDIO_DATA.filter(item => {
+    const filtered = TEST_VIDEOS_DATA.filter(item => {
       if (levelFilter === 'all') return true;
-      return item.level === levelFilter || item.levelLabel.toLowerCase().includes(levelFilter);
+      return item.level === levelFilter;
     });
-    
+
     filtered.forEach(item => {
       const card = document.createElement('div');
-      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);transition:box-shadow 0.18s;cursor:pointer;';
+      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;';
+      
       card.innerHTML = `
-        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${item.icon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${item.channel} • ${item.duration}</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎧</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} • Audio + Bấm giờ thi</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};white-space:nowrap">${item.levelLabel}</span>
-          <span style="font-size:10px;color:var(--primary);font-weight:700">▶ Phát Audio</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};">${item.levelLabel}</span>
+          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Nghe ngay</span>
         </div>
       `;
-      card.addEventListener('click', () => playAudioTrack(item));
+
+      card.addEventListener('click', () => loadTrack(item));
       card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
       card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
+
       grid.appendChild(card);
     });
-    
+
     if (filtered.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có bài audio cho cấp độ này</div>';
+      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có bài thi cho cấp độ này</div>';
     }
   }
-  
-  // Level filter tabs listener
+
+  // Level filter tabs
   const filterContainer = document.getElementById('test-level-filters');
   if (filterContainer) {
     filterContainer.addEventListener('click', (e) => {
@@ -4518,13 +4621,12 @@ function initTestVideoSection() {
       if (btn) {
         filterContainer.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderVideos(btn.getAttribute('data-level'));
+        renderExamList(btn.getAttribute('data-level'));
       }
     });
   }
-  
-  // Initial render
-  renderVideos('all');
-}
-}
 
+  // Initial render & default track load
+  renderExamList('all');
+  loadTrack(TEST_VIDEOS_DATA[0]);
+}
