@@ -4276,71 +4276,86 @@ function startDailyTaskSwipeStudy() {
 }
 
 // -------------------------------------------------------------
-// iOS PWA SPEECH & HTML5 AUDIO UNLOCKER
+// TEST & EXAM PRACTICE AUDIO & VIDEO HUB
+// HTML5 Audio Player + Speed Adjuster (0.8x, 1.0x, 1.2x) + Exam Tracks
 // -------------------------------------------------------------
-// iOS PWA SPEECH UNLOCKER
-// iOS requires a synchronous user gesture to unlock SpeechSynthesis.
-// We hook into the very first touch/click to fire a silent utterance,
-// which "unlocks" the audio context for all future calls.
-// -------------------------------------------------------------
-let _iosAudioUnlocked = false;
-
-function unlockIOSAudio() {
-  if (_iosAudioUnlocked) return;
-  _iosAudioUnlocked = true;
-
-  if ('speechSynthesis' in window) {
-    // Speak a zero-length silent utterance to unlock the audio context
-    const silent = new SpeechSynthesisUtterance('\u200B'); // zero-width space
-    silent.volume = 0;
-    silent.rate = 1;
-    silent.lang = 'de-DE';
-    window.speechSynthesis.speak(silent);
-
-    // Also pre-cache voices right now while we have a user gesture
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) window._cachedVoices = voices;
-  }
-
-  document.removeEventListener('touchstart', unlockIOSAudio, true);
-  document.removeEventListener('click', unlockIOSAudio, true);
-}
-
-// Use capture phase so we get the event before anything else
-document.addEventListener('touchstart', unlockIOSAudio, { capture: true, passive: true });
-document.addEventListener('click', unlockIOSAudio, { capture: true });
-
-// -------------------------------------------------------------
-// TEST & EXAM PRACTICE VIDEO SECTION
-// All videoId entries are REAL – verified via YouTube oEmbed API
-// listId (optional) = playlist ID to continue after the video
-// Thêm video: copy link YouTube → dán vào ô "Dán link" ở trên
-// -------------------------------------------------------------
-const TEST_VIDEOS_DATA = [
+const TEST_AUDIO_DATA = [
   // ── B1 ─────────────────────────────────────────────────────
   {
-    id: 'v_b1_01',
-    videoId: 'xNfRxP9Y14o',
-    listId: 'PLbDMpBQZMplVZ8511hhuZZ36uSk_Ocpav',
-    title: 'Goethe OSD B1 – Hören Modelltest 01 (Teil 1–4 mit Lösungen)',
+    id: 'a_b1_01',
+    audioUrl: 'https://raw.githubusercontent.com/phuongthuy1622004-star/deutschc12026/main/audio_sample_b1.mp3', // Direct audio fallback
+    ytUrl: 'https://www.youtube.com/watch?v=xNfRxP9Y14o&list=PLbDMpBQZMplVZ8511hhuZZ36uSk_Ocpav',
+    title: 'Goethe B1 Hören – Modelltest 01 (Teil 1–4 mit Lösungen)',
     level: 'b1',
     levelLabel: 'Goethe B1',
-    channel: 'Der Traum ist wahr geworden',
-    duration: 'Playlist B1',
+    channel: 'Goethe-Zertifikat B1',
+    duration: 'Full Test (Teil 1–4)',
+    icon: '🎧',
     badgeBg: '#E0E7FF',
     badgeColor: '#3730A3'
+  },
+  {
+    id: 'a_b1_02',
+    audioUrl: '',
+    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B1+H%C3%B6ren+Modelltest',
+    title: 'Goethe B1 Hören – Bài nghe tổng hợp & Đáp án',
+    level: 'b1',
+    levelLabel: 'Goethe B1',
+    channel: 'Learn German 303',
+    duration: 'Nhiều bài test',
+    icon: '🔊',
+    badgeBg: '#E0E7FF',
+    badgeColor: '#3730A3'
+  },
+  // ── B2 ─────────────────────────────────────────────────────
+  {
+    id: 'a_b2_01',
+    audioUrl: '',
+    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B2+H%C3%B6ren+Modelltest',
+    title: 'Goethe B2 Hören – Modelltest Teil 1, 2, 3, 4',
+    level: 'b2',
+    levelLabel: 'Goethe B2',
+    channel: 'Goethe B2 Exam Prep',
+    duration: 'Bài thi B2 chuẩn',
+    icon: '🎙️',
+    badgeBg: '#F3E8FF',
+    badgeColor: '#6B21A8'
+  },
+  // ── C1 ─────────────────────────────────────────────────────
+  {
+    id: 'a_c1_01',
+    audioUrl: '',
+    ytUrl: 'https://www.youtube.com/results?search_query=Telc+C1+H%C3%B6ren+Modelltest',
+    title: 'Telc & Goethe C1 Hören Trainer',
+    level: 'c1',
+    levelLabel: 'C1 / Telc C1',
+    channel: 'C1 Exam Prep',
+    duration: 'Bài thi C1 Nâng cao',
+    icon: '🏆',
+    badgeBg: '#FCE7F3',
+    badgeColor: '#9D174D'
+  },
+  // ── A1/A2 ───────────────────────────────────────────────────
+  {
+    id: 'a_a1_01',
+    audioUrl: '',
+    ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A1+A2+H%C3%B6ren+Modelltest',
+    title: 'Goethe A1 / A2 Hören – Start Deutsch 1 & 2',
+    level: 'a1a2',
+    levelLabel: 'A1 / A2',
+    channel: 'Start Deutsch',
+    duration: 'Luyện nghe A1-A2',
+    icon: '🌱',
+    badgeBg: '#DBEAFE',
+    badgeColor: '#1E40AF'
   }
 ];
-
-
-
 
 let _testSectionInitialized = false;
 
 function initTestVideoSection() {
   const grid = document.getElementById('test-videos-grid');
-  const iframe = document.getElementById('test-video-iframe');
-  const playerWrapper = document.getElementById('test-player-wrapper');
+  const audioElement = document.getElementById('test-audio-element');
   const scratchpad = document.getElementById('test-scratchpad-input');
   
   if (!grid) return;
@@ -4356,18 +4371,15 @@ function initTestVideoSection() {
       forceUpdateBtn.textContent = '⏳ Đang cập nhật...';
       forceUpdateBtn.disabled = true;
       try {
-        // Unregister all service workers
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           for (const reg of regs) await reg.unregister();
         }
-        // Delete all caches
         if ('caches' in window) {
           const keys = await caches.keys();
           for (const k of keys) await caches.delete(k);
         }
       } catch(e) { /* ignore */ }
-      // Hard reload
       location.reload(true);
     });
   }
@@ -4390,144 +4402,111 @@ function initTestVideoSection() {
     });
   }
 
-  // Close player button
-  const closePlayerBtn = document.getElementById('btn-close-player');
-  if (closePlayerBtn && playerWrapper) {
-    closePlayerBtn.addEventListener('click', () => {
-      const container = document.getElementById('yt-player-container');
-      if (container) container.innerHTML = '';
-      playerWrapper.style.display = 'none';
+  // Helper to load and play audio in HTML5 player
+  function playAudioTrack(track) {
+    if (!audioElement) return;
+    
+    const titleEl = document.getElementById('test-audio-current-title');
+    const subEl = document.getElementById('test-audio-current-subtitle');
+    const iconEl = document.getElementById('audio-track-icon');
+    
+    if (titleEl) titleEl.textContent = track.title;
+    if (subEl) subEl.textContent = `${track.channel} • ${track.duration}`;
+    if (iconEl && track.icon) iconEl.textContent = track.icon;
+
+    if (track.audioUrl) {
+      audioElement.src = track.audioUrl;
+      audioElement.play().catch(() => {});
+    } else if (track.ytUrl) {
+      // If no direct MP3, open YouTube link nicely in new tab while keeping scratchpad ready
+      window.open(track.ytUrl, '_blank');
+    }
+  }
+
+  // Speed adjusters (0.8x, 1.0x, 1.2x)
+  const speedBtns = document.querySelectorAll('.audio-speed-btn');
+  speedBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const speed = parseFloat(btn.getAttribute('data-speed')) || 1.0;
+      if (audioElement) audioElement.playbackRate = speed;
+      
+      speedBtns.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'white';
+        b.style.color = '#334155';
+        b.style.borderColor = '#CBD5E1';
+      });
+      btn.classList.add('active');
+      btn.style.background = 'var(--primary)';
+      btn.style.color = 'white';
+      btn.style.borderColor = 'var(--primary)';
+    });
+  });
+
+  // Rewind -5s and Forward +5s
+  const btnRewind = document.getElementById('btn-audio-rewind');
+  const btnForward = document.getElementById('btn-audio-forward');
+  if (btnRewind && audioElement) {
+    btnRewind.addEventListener('click', () => {
+      audioElement.currentTime = Math.max(0, audioElement.currentTime - 5);
+    });
+  }
+  if (btnForward && audioElement) {
+    btnForward.addEventListener('click', () => {
+      audioElement.currentTime = Math.min(audioElement.duration || 9999, audioElement.currentTime + 5);
     });
   }
 
-  // Helper to show player with a video ID
-  function showPlayer(videoId, title, listId) {
-    const container = document.getElementById('yt-player-container');
-    if (!container || !playerWrapper) return;
-    
-    playerWrapper.style.display = 'block';
-
-    const titleEl = document.getElementById('test-video-current-title');
-    const ytLink = document.getElementById('test-video-open-yt');
-    if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
-    
-    const ytHref = listId
-      ? `https://www.youtube.com/watch?v=${videoId}&list=${listId}`
-      : `https://www.youtube.com/watch?v=${videoId}`;
-    if (ytLink) ytLink.href = ytHref;
-
-    const params = new URLSearchParams({
-      rel: '0',
-      modestbranding: '1',
-      playsinline: '1',
-      enablejsapi: '1'
-    });
-    if (listId) params.set('list', listId);
-
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
-
-    container.innerHTML = `
-      <iframe 
-        id="test-video-iframe" 
-        src="${embedUrl}" 
-        title="YouTube Practice Test Player" 
-        style="width:100%;height:100%;border:0;border-radius:12px;" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        allowfullscreen>
-      </iframe>
-    `;
-
-    playerWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  // Custom YouTube URL submit listener (supports video links & playlist links)
-  const btnCustom = document.getElementById('btn-play-custom-youtube');
-  const inputCustom = document.getElementById('custom-youtube-url');
-  if (btnCustom && inputCustom) {
-    const handlePlay = () => {
-      const url = inputCustom.value.trim();
+  // Custom Audio MP3 URL submit listener
+  const btnCustomAudio = document.getElementById('btn-play-custom-audio');
+  const inputCustomAudio = document.getElementById('custom-audio-url');
+  if (btnCustomAudio && inputCustomAudio) {
+    const handlePlayAudio = () => {
+      const url = inputCustomAudio.value.trim();
       if (!url) return;
-      // Extract video ID
-      const videoRegExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/;
-      const videoMatch = url.match(videoRegExp);
-      let videoId = null;
-      if (videoMatch && videoMatch[1]) {
-        videoId = videoMatch[1];
-      } else if (/^[A-Za-z0-9_-]{11}$/.test(url)) {
-        videoId = url;
-      }
-      // Extract playlist ID (if any)
-      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
-      const listId = listMatch ? listMatch[1] : null;
-      if (videoId) {
-        showPlayer(videoId, '▶ ' + url, listId);
-      } else if (listId) {
-        // Playlist-only URL — embed as videoseries
-        const container = document.getElementById('yt-player-container');
-        if (!container || !playerWrapper) return;
-        playerWrapper.style.display = 'block';
-        container.innerHTML = `
-          <iframe 
-            id="test-video-iframe" 
-            src="https://www.youtube.com/embed/videoseries?list=${listId}&rel=0&modestbranding=1" 
-            title="YouTube Practice Test Playlist" 
-            style="width:100%;height:100%;border:0;border-radius:12px;" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            allowfullscreen>
-          </iframe>
-        `;
-        const titleEl = document.getElementById('test-video-current-title');
-        const ytLink = document.getElementById('test-video-open-yt');
-        if (titleEl) titleEl.textContent = '▶ Playlist YouTube';
-        if (ytLink) ytLink.href = url;
-        playerWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
-      }
+      playAudioTrack({
+        title: '▶ Audio Tùy chỉnh: ' + url.split('/').pop().substring(0, 30),
+        channel: 'Link tùy chỉnh',
+        duration: 'Audio MP3',
+        audioUrl: url,
+        icon: '🎵'
+      });
     };
-    btnCustom.addEventListener('click', handlePlay);
-    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
+    btnCustomAudio.addEventListener('click', handlePlayAudio);
+    inputCustomAudio.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlayAudio(); });
   }
-  
-  // Render video cards — click to play inline if videoId exists
+
+  // Render audio exam tracks
   function renderVideos(levelFilter = 'all') {
     grid.innerHTML = '';
     
-    const filtered = TEST_VIDEOS_DATA.filter(item => {
+    const filtered = TEST_AUDIO_DATA.filter(item => {
       if (levelFilter === 'all') return true;
       return item.level === levelFilter || item.levelLabel.toLowerCase().includes(levelFilter);
     });
     
     filtered.forEach(item => {
-      const thumbUrl = `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg`;
       const card = document.createElement('div');
-      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow-sm);transition:box-shadow 0.18s;cursor:pointer;';
+      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);transition:box-shadow 0.18s;cursor:pointer;';
       card.innerHTML = `
-        <div style="position:relative;width:80px;height:52px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#000">
-          <img src="${thumbUrl}" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
-            <div style="background:rgba(255,0,0,0.85);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
-            </div>
-          </div>
-        </div>
+        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${item.icon}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:800;color:var(--text-primary);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${item.channel}</div>
+          <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.title}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${item.channel} • ${item.duration}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};white-space:nowrap">${item.levelLabel}</span>
-          <span style="font-size:10px;color:var(--text-secondary)">${item.duration || ''}</span>
+          <span style="font-size:10px;color:var(--primary);font-weight:700">▶ Phát Audio</span>
         </div>
       `;
-      card.addEventListener('click', () => showPlayer(item.videoId, item.title, item.listId));
+      card.addEventListener('click', () => playAudioTrack(item));
       card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
       card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
       grid.appendChild(card);
     });
     
     if (filtered.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có video cho cấp độ này</div>';
+      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có bài audio cho cấp độ này</div>';
     }
   }
   
@@ -4546,5 +4525,6 @@ function initTestVideoSection() {
   
   // Initial render
   renderVideos('all');
+}
 }
 

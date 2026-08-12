@@ -184,7 +184,7 @@
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v45</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v46</div>
       </div>
     </section>
       
@@ -230,59 +230,80 @@
         </div>
       </section>
       
-      <!-- 4. TAB TEST SECTION (EMBEDDED YOUTUBE VIDEO TESTS & PRACTICE) -->
+      <!-- 4. TAB TEST SECTION (AUDIO LISTENING PRACTICE HUB) -->
       <section id="test-page" class="page safe-padding-top safe-padding-bottom" style="padding-bottom: 90px; overflow-y: auto;">
         
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
             <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">Listening Practice 🎧</div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Xem video trực tiếp trong app — không cần mở YouTube</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Trình phát Audio bài thi Goethe & Telc không bị khóa</div>
           </div>
           <div style="display: flex; gap: 6px; align-items: center;">
             <button type="button" id="btn-force-update-test" title="Xóa cache và tải lại app" style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 6px 8px; font-size: 11px; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap;">🔄 Update</button>
             <a href="https://www.youtube.com/@Learngerman303" target="_blank" rel="noopener noreferrer" class="btn-primary" style="margin: 0; padding: 6px 10px; font-size: 11px; width: auto; border-radius: 8px; display: flex; align-items: center; gap: 4px; text-decoration: none; background: #FF0000; color: white;">
-              <span>▶</span> YouTube
+              <span>▶</span> YouTube 303
             </a>
           </div>
         </div>
 
-        <!-- Custom YouTube Link Player Input (PRIMARY ACTION) -->
-        <div style="background: white; border: 2px solid var(--primary); border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm);">
-          <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-            <span>🔗</span> Dán link YouTube để xem trong app:
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" id="custom-youtube-url" class="form-input" placeholder="https://youtu.be/... hoặc video ID" style="border-radius: 8px; font-size: 12px; height: 40px; padding: 0 10px; flex: 1;">
-            <button type="button" id="btn-play-custom-youtube" class="btn-primary" style="margin: 0; padding: 0 14px; font-size: 13px; height: 40px; border-radius: 8px; width: auto; white-space: nowrap;">
-              ▶ Phát
-            </button>
-          </div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">💡 Copy link video từ YouTube → dán vào đây → nhấn Phát</div>
-        </div>
-
-        <!-- Video Player (hidden by default, shown on play) -->
-        <div id="test-player-wrapper" style="display: none; background: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow-sm);">
-          <div class="video-responsive-wrapper" id="yt-player-container">
-            <div id="yt-player-slot"></div>
-          </div>
-          <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-            <div style="flex: 1;">
-              <div id="test-video-current-title" style="font-size: 13px; font-weight: 800; color: var(--text-primary); line-height: 1.3;"></div>
-              <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
-                <a id="test-video-open-yt" href="#" target="_blank" rel="noopener" class="btn-primary" style="margin: 0; padding: 5px 10px; font-size: 11px; width: auto; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; background: #FF0000; color: white; font-weight: 700;">
-                  ▶ Mở trên YouTube App
-                </a>
+        <!-- Audio Player Player Card Container -->
+        <div style="background: white; border: 2px solid var(--primary); border-radius: 20px; padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm);">
+          
+          <!-- Currently Loaded Track Info -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #FFF1F2; border: 1px solid #FECDD3; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;" id="audio-track-icon">
+              🎧
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div id="test-audio-current-title" style="font-size: 14px; font-weight: 800; color: var(--text-primary); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                Goethe B1 Hören – Modelltest 01
+              </div>
+              <div id="test-audio-current-subtitle" style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                Chọn danh sách bên dưới hoặc dán link Audio / MP3
               </div>
             </div>
-            <button type="button" id="btn-close-player" style="background: #FEE2E2; border: none; border-radius: 8px; padding: 4px 8px; font-size: 11px; font-weight: 700; color: #DC2626; cursor: pointer;">✕ Đóng</button>
+          </div>
+
+          <!-- HTML5 Native Audio element -->
+          <audio id="test-audio-element" style="width: 100%; height: 40px; margin-bottom: 12px; border-radius: 8px;" controls preload="metadata"></audio>
+
+          <!-- Audio Controls: Speed Adjuster & Quick Jump Buttons -->
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px;">
+            
+            <!-- Speed controls -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-right: 2px;">Tốc độ:</span>
+              <button type="button" class="audio-speed-btn" data-speed="0.8" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">0.8x</button>
+              <button type="button" class="audio-speed-btn active" data-speed="1.0" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid var(--primary); background: var(--primary); color: white; font-weight: 700; cursor: pointer;">1.0x</button>
+              <button type="button" class="audio-speed-btn" data-speed="1.2" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">1.2x</button>
+            </div>
+
+            <!-- Jump -5s / +5s -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-audio-rewind" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">⏪ -5s</button>
+              <button type="button" id="btn-audio-forward" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">⏩ +5s</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Custom Audio MP3 URL Input -->
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow-sm);">
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            <span>🔗</span> Dán link Audio MP3 tùy chỉnh:
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="custom-audio-url" class="form-input" placeholder="https://.../file.mp3 hoặc Google Drive Direct MP3 link" style="border-radius: 8px; font-size: 12px; height: 38px; padding: 0 10px; flex: 1;">
+            <button type="button" id="btn-play-custom-audio" class="btn-primary" style="margin: 0; padding: 0 12px; font-size: 12px; height: 38px; border-radius: 8px; width: auto; white-space: nowrap;">
+              ▶ Mở Audio
+            </button>
           </div>
         </div>
 
-        <!-- Curated Video Cards (click to play inline) -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">🎬 Video luyện nghe (nhấn để xem ngay)</div>
-        </div>
+        <!-- Exam Audio Decks Grid -->
+        <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px;">📋 Danh sách bài nghe Audio chính thức:</div>
+        
         <!-- Level Filter Tabs -->
         <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; -webkit-overflow-scrolling: touch;" id="test-level-filters">
           <button type="button" class="segment-btn active" data-level="all" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">Tất cả</button>
@@ -291,6 +312,7 @@
           <button type="button" class="segment-btn" data-level="b1" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">B1</button>
           <button type="button" class="segment-btn" data-level="a1a2" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">A1/A2</button>
         </div>
+
         <div id="test-videos-grid" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
           <!-- Injected dynamically in app.js -->
         </div>
@@ -303,7 +325,7 @@
             </div>
             <button type="button" id="btn-clear-scratchpad" style="background: none; border: none; font-size: 11px; color: #EF4444; font-weight: 700; cursor: pointer;">Xóa nháp</button>
           </div>
-          <textarea id="test-scratchpad-input" class="form-input" rows="4" placeholder="Ghi đáp án khi xem video...&#10;Ví dụ:&#10;Teil 1: 1.A, 2.B, 3.C&#10;Teil 2: 4.Richtig, 5.Falsch" style="border-radius: 10px; font-size: 12px; font-family: monospace; padding: 10px; width: 100%; resize: vertical;"></textarea>
+          <textarea id="test-scratchpad-input" class="form-input" rows="4" placeholder="Ghi đáp án khi nghe Audio...&#10;Ví dụ:&#10;Teil 1: 1.A, 2.B, 3.C&#10;Teil 2: 4.Richtig, 5.Falsch" style="border-radius: 10px; font-size: 12px; font-family: monospace; padding: 10px; width: 100%; resize: vertical;"></textarea>
         </div>
 
       </section>
