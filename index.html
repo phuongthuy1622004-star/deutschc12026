@@ -184,7 +184,7 @@
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v41</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v42</div>
       </div>
     </section>
       
@@ -236,8 +236,8 @@
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
-            <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">Listening Practice</div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Dán link YouTube → xem trực tiếp trong app</div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">Listening Practice 🎧</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Xem video trực tiếp trong app — không cần mở YouTube</div>
           </div>
           <a href="https://www.youtube.com/@Learngerman303" target="_blank" rel="noopener noreferrer" class="btn-primary" style="margin: 0; padding: 6px 10px; font-size: 11px; width: auto; border-radius: 8px; display: flex; align-items: center; gap: 4px; text-decoration: none; background: #FF0000; color: white;">
             <span>▶</span> YouTube
@@ -278,8 +278,18 @@
           </div>
         </div>
 
-        <!-- Curated Video Links by Level -->
-        <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px;">📋 Tìm video theo cấp độ trên YouTube:</div>
+        <!-- Curated Video Cards (click to play inline) -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">🎬 Video luyện nghe (nhấn để xem ngay)</div>
+        </div>
+        <!-- Level Filter Tabs -->
+        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; -webkit-overflow-scrolling: touch;" id="test-level-filters">
+          <button type="button" class="segment-btn active" data-level="all" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">Tất cả</button>
+          <button type="button" class="segment-btn" data-level="c1" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">C1</button>
+          <button type="button" class="segment-btn" data-level="b2" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">B2</button>
+          <button type="button" class="segment-btn" data-level="b1" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">B1</button>
+          <button type="button" class="segment-btn" data-level="a1a2" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">A1/A2</button>
+        </div>
         <div id="test-videos-grid" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
           <!-- Injected dynamically in app.js -->
         </div>
