@@ -187,7 +187,7 @@
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v42</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v43</div>
       </div>
     </section>
       
@@ -250,7 +250,7 @@
         <!-- Full-Width YouTube Video Player Container -->
         <div id="static-yt-player-wrapper" style="width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; background: #0F172A; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); overflow: hidden;">
           <!-- Placeholder shown before user picks a video -->
-          <div id="static-yt-placeholder" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; background: #1E293B; cursor: pointer;" onclick="document.getElementById('static-yt-placeholder').style.display='none'; var f=document.getElementById('static-yt-iframe'); f.style.display='block'; f.src='https://www.youtube-nocookie.com/embed/xNfRxP9Y14o?autoplay=1&playsinline=1&rel=0&enablejsapi=1';">
+          <div id="static-yt-placeholder" style="position: relative; width: 100%; padding-bottom: 62%; height: 0; background: #1E293B; cursor: pointer;" onclick="document.getElementById('static-yt-placeholder').style.display='none'; var f=document.getElementById('static-yt-iframe'); f.style.display='block'; f.src='https://www.youtube-nocookie.com/embed/xNfRxP9Y14o?autoplay=1&playsinline=1&rel=0&enablejsapi=1';">
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
               <div style="width:56px;height:56px;background:#EF4444;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(239,68,68,0.4);">
                 <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:white;margin-left:3px;"><polygon points="5,3 19,12 5,21"/></svg>
@@ -263,7 +263,7 @@
             id="static-yt-iframe"
             src=""
             title="YouTube video player" 
-            style="display:none; width: 100%; aspect-ratio: 16/9; border: 0;"
+            style="display:none; width: 100%; aspect-ratio: 16/10; min-height: 230px; border: 0;"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             referrerpolicy="strict-origin-when-cross-origin" 
             allowfullscreen>
