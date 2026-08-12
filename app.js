@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=43')
+    navigator.serviceWorker.register('./sw.js?v=44')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -4475,6 +4475,27 @@ function initTestVideoSection() {
     return parseYouTubeUrlInfo(url).videoId || '';
   }
 
+  let _bgAudioElem = null;
+  function activateIOSBackgroundAudio(title, videoId) {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title || 'Luyện Nghe Tiếng Đức',
+        artist: 'Deutsch C1 App',
+        artwork: videoId ? [
+          { src: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`, sizes: '320x180', type: 'image/jpeg' }
+        ] : []
+      });
+    }
+    try {
+      if (!_bgAudioElem) {
+        _bgAudioElem = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        _bgAudioElem.loop = true;
+        _bgAudioElem.volume = 0.01;
+      }
+      _bgAudioElem.play().catch(() => {});
+    } catch(e) { /* ignore */ }
+  }
+
   // Helper: swap iframe src with new video — uses youtube-nocookie.com, origin param, strict-origin-when-cross-origin
   function loadInIframe(videoId, title, startTime = 0) {
     const iframe = document.getElementById('static-yt-iframe');
@@ -4491,6 +4512,7 @@ function initTestVideoSection() {
     iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&enablejsapi=1${originParam}${startParam}`;
     iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
     if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
+    activateIOSBackgroundAudio(title, videoId);
     iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
