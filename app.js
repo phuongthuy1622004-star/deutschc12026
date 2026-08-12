@@ -4386,76 +4386,42 @@ function loadYTAPI() {
   document.head.appendChild(tag);
 }
 
-// Create or update YT.Player with a video ID
+// Create or update embed player with video ID & explicit referrer policy for Error 153 fix
 function playYTVideo(videoId, listId, title, ytHref) {
   const wrapper = document.getElementById('yt-api-player-wrapper');
+  const slot = document.getElementById('yt-api-player-div');
   const titleEl = document.getElementById('yt-api-video-title');
-  const ytLink = document.getElementById('yt-api-open-yt');
 
-  if (!wrapper) return;
+  if (!wrapper || !slot) return;
   wrapper.style.display = 'block';
   if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
-  if (ytLink) ytLink.href = ytHref || `https://www.youtube.com/watch?v=${videoId}`;
+
+  const params = new URLSearchParams({
+    autoplay: '1',
+    playsinline: '1',
+    rel: '0',
+    modestbranding: '1',
+    enablejsapi: '1'
+  });
+  if (listId) params.set('list', listId);
+
+  const embedUrl = videoId
+    ? `https://www.youtube.com/embed/${videoId}?${params.toString()}`
+    : `https://www.youtube.com/embed/videoseries?list=${listId}&autoplay=1&playsinline=1`;
+
+  slot.innerHTML = `
+    <iframe 
+      id="yt-embed-iframe"
+      src="${embedUrl}" 
+      title="${title || 'YouTube Player'}"
+      style="width: 100%; height: 100%; border: 0;"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>
+  `;
+
   wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  const playerVars = {
-    autoplay: 1,
-    playsinline: 1,        // KEY: Prevent iOS from opening fullscreen / YouTube app
-    rel: 0,
-    modestbranding: 1,
-    enablejsapi: 1,
-    origin: location.origin
-  };
-  if (listId) playerVars.list = listId;
-
-  if (_ytPlayer && typeof _ytPlayer.loadVideoById === 'function') {
-    // Reuse existing player — just load new video
-    if (listId) {
-      _ytPlayer.loadPlaylist({ list: listId, listType: 'playlist' });
-    } else {
-      _ytPlayer.loadVideoById(videoId);
-    }
-    return;
-  }
-
-  // Clear any stale div content and recreate
-  const slot = document.getElementById('yt-api-player-div');
-  if (slot) slot.innerHTML = '';
-
-  if (_ytApiReady && window.YT && window.YT.Player) {
-    _ytPlayer = new window.YT.Player('yt-api-player-div', {
-      videoId: videoId,
-      playerVars: playerVars,
-      events: {
-        onReady: (e) => { e.target.playVideo(); },
-        onError: (e) => {
-          console.warn('[YT API] Player error code:', e.data);
-          // Error 150/151 = video blocked by owner for embeds
-          if (e.data === 150 || e.data === 101) {
-            if (ytLink) {
-              ytLink.textContent = '⚠️ Video bị khóa – Mở YouTube';
-              ytLink.style.background = '#EA580C';
-            }
-          }
-        }
-      }
-    });
-  } else {
-    // API not ready yet — poll until ready then create player
-    const interval = setInterval(() => {
-      if (_ytApiReady && window.YT && window.YT.Player) {
-        clearInterval(interval);
-        _ytPlayer = new window.YT.Player('yt-api-player-div', {
-          videoId: videoId,
-          playerVars: playerVars,
-          events: {
-            onReady: (e) => { e.target.playVideo(); },
-            onError: (e) => { console.warn('[YT API] Error:', e.data); }
-          }
-        });
-      }
-    }, 200);
-  }
 }
 
 function initTestVideoSection() {
