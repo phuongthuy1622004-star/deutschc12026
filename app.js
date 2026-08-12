@@ -4454,12 +4454,16 @@ function initTestVideoSection() {
     return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(url.trim()) ? url.trim() : null);
   }
 
-  // Helper: swap iframe src with new video, NO enablejsapi, NO origin
+  // Helper: swap iframe src with new video — uses youtube-nocookie.com, no JS API
   function loadInIframe(videoId, title) {
     const iframe = document.getElementById('static-yt-iframe');
+    const placeholder = document.getElementById('static-yt-placeholder');
     const titleEl = document.getElementById('static-yt-title');
     if (!iframe) return;
-    // Use youtube-nocookie.com to reduce tracking restrictions + referrerpolicy already in HTML
+    // Hide placeholder, show iframe
+    if (placeholder) placeholder.style.display = 'none';
+    iframe.style.display = 'block';
+    // Use youtube-nocookie.com: less restricted, no JS API, no origin param needed
     iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0`;
     if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
     iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
