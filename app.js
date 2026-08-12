@@ -4392,36 +4392,54 @@ function initTestVideoSection() {
 
   // Close player button
   const closePlayerBtn = document.getElementById('btn-close-player');
-  if (closePlayerBtn && playerWrapper && iframe) {
+  if (closePlayerBtn && playerWrapper) {
     closePlayerBtn.addEventListener('click', () => {
-      iframe.src = '';
+      const container = document.getElementById('yt-player-container');
+      if (container) container.innerHTML = '';
       playerWrapper.style.display = 'none';
     });
   }
 
   // Helper to show player with a video ID
-  // Uses youtube-nocookie.com to reduce tracking + avoid some embed restrictions
   function showPlayer(videoId, title, listId) {
-    if (!iframe || !playerWrapper) return;
-    const params = new URLSearchParams({
-      rel: '0',
-      modestbranding: '1',
-      fs: '1',
-      enablejsapi: '1'
-    });
-    if (listId) params.set('list', listId);
-    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+    const container = document.getElementById('yt-player-container');
+    if (!container || !playerWrapper) return;
+    
     playerWrapper.style.display = 'block';
+
     const titleEl = document.getElementById('test-video-current-title');
     const ytLink = document.getElementById('test-video-open-yt');
     if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
+    
     const ytHref = listId
       ? `https://www.youtube.com/watch?v=${videoId}&list=${listId}`
       : `https://www.youtube.com/watch?v=${videoId}`;
     if (ytLink) ytLink.href = ytHref;
+
+    const params = new URLSearchParams({
+      rel: '0',
+      modestbranding: '1',
+      playsinline: '1',
+      enablejsapi: '1'
+    });
+    if (listId) params.set('list', listId);
+
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+
+    container.innerHTML = `
+      <iframe 
+        id="test-video-iframe" 
+        src="${embedUrl}" 
+        title="YouTube Practice Test Player" 
+        style="width:100%;height:100%;border:0;border-radius:12px;" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
+      </iframe>
+    `;
+
     playerWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  
+
   // Custom YouTube URL submit listener (supports video links & playlist links)
   const btnCustom = document.getElementById('btn-play-custom-youtube');
   const inputCustom = document.getElementById('custom-youtube-url');
@@ -4444,10 +4462,20 @@ function initTestVideoSection() {
       if (videoId) {
         showPlayer(videoId, '▶ ' + url, listId);
       } else if (listId) {
-        // Playlist-only URL — embed as videoseries using nocookie domain
-        if (!iframe || !playerWrapper) return;
-        iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&rel=0&modestbranding=1`;
+        // Playlist-only URL — embed as videoseries
+        const container = document.getElementById('yt-player-container');
+        if (!container || !playerWrapper) return;
         playerWrapper.style.display = 'block';
+        container.innerHTML = `
+          <iframe 
+            id="test-video-iframe" 
+            src="https://www.youtube.com/embed/videoseries?list=${listId}&rel=0&modestbranding=1" 
+            title="YouTube Practice Test Playlist" 
+            style="width:100%;height:100%;border:0;border-radius:12px;" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen>
+          </iframe>
+        `;
         const titleEl = document.getElementById('test-video-current-title');
         const ytLink = document.getElementById('test-video-open-yt');
         if (titleEl) titleEl.textContent = '▶ Playlist YouTube';
