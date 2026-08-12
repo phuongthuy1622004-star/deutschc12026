@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=39')
+    navigator.serviceWorker.register('./sw.js?v=40')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -4387,7 +4387,8 @@ function loadYTAPI() {
 }
 
 // Create or update embed player with video ID & explicit referrer policy for Error 153 fix
-function playYTVideo(videoId, listId, title, ytHref) {
+// Create or update embed player with video ID & explicit referrer policy & origin for Error 153 fix
+function playYTVideo(videoId, listId, title, startSec = 0) {
   const wrapper = document.getElementById('yt-api-player-wrapper');
   const slot = document.getElementById('yt-api-player-div');
   const titleEl = document.getElementById('yt-api-video-title');
@@ -4403,11 +4404,13 @@ function playYTVideo(videoId, listId, title, ytHref) {
     modestbranding: '1',
     enablejsapi: '1'
   });
+  if (window.location.origin) params.set('origin', window.location.origin);
   if (listId) params.set('list', listId);
+  if (startSec > 0) params.set('start', startSec);
 
   const embedUrl = videoId
-    ? `https://www.youtube.com/embed/${videoId}?${params.toString()}`
-    : `https://www.youtube.com/embed/videoseries?list=${listId}&autoplay=1&playsinline=1`;
+    ? `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`
+    : `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1&playsinline=1&origin=${encodeURIComponent(window.location.origin || '')}`;
 
   slot.innerHTML = `
     <iframe 
@@ -4448,14 +4451,28 @@ function initTestVideoSection() {
     });
   }
 
-  // Helper: parse video ID from any YouTube URL
-  function parseYouTubeId(url) {
-    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
-    return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(url.trim()) ? url.trim() : null);
+  // Helper: parse video ID and timestamp t= from any YouTube URL
+  function parseYouTubeUrlInfo(url) {
+    if (!url) return { videoId: null, startTime: 0 };
+    const trimmed = url.trim();
+    const mId = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    const videoId = mId ? mId[1] : (/^[A-Za-z0-9_-]{11}$/.test(trimmed) ? trimmed : null);
+    
+    let startTime = 0;
+    const mT = trimmed.match(/(?:[\?&]t=|[\?&]start=)(\d+h)?(\d+m)?(\d+s?)?/);
+    if (mT) {
+      if (mT[1] || mT[2] || mT[3]) {
+        const hours = parseInt(mT[1]) || 0;
+        const minutes = parseInt(mT[2]) || 0;
+        const seconds = parseInt(mT[3]) || 0;
+        startTime = hours * 3600 + minutes * 60 + seconds;
+      }
+    }
+    return { videoId, startTime };
   }
 
-  // Helper: swap iframe src with new video — uses youtube-nocookie.com, no JS API
-  function loadInIframe(videoId, title) {
+  // Helper: swap iframe src with new video — uses youtube-nocookie.com, origin param, strict-origin-when-cross-origin
+  function loadInIframe(videoId, title, startTime = 0) {
     const iframe = document.getElementById('static-yt-iframe');
     const placeholder = document.getElementById('static-yt-placeholder');
     const titleEl = document.getElementById('static-yt-title');
@@ -4463,8 +4480,12 @@ function initTestVideoSection() {
     // Hide placeholder, show iframe
     if (placeholder) placeholder.style.display = 'none';
     iframe.style.display = 'block';
-    // Use youtube-nocookie.com: less restricted, no JS API, no origin param needed
-    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0`;
+    
+    const originParam = window.location.origin ? `&origin=${encodeURIComponent(window.location.origin)}` : '';
+    const startParam = startTime > 0 ? `&start=${startTime}` : '';
+    
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&enablejsapi=1${originParam}${startParam}`;
+    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
     if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
     iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -4476,9 +4497,9 @@ function initTestVideoSection() {
     const handlePlay = () => {
       const url = inputCustom.value.trim();
       if (!url) return;
-      const videoId = parseYouTubeId(url);
+      const { videoId, startTime } = parseYouTubeUrlInfo(url);
       if (videoId) {
-        loadInIframe(videoId, '▶ ' + url);
+        loadInIframe(videoId, '▶ ' + url, startTime);
       } else {
         window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
       }
