@@ -4460,15 +4460,12 @@ function playYTVideo(videoId, listId, title, ytHref) {
 
 function initTestVideoSection() {
   const grid = document.getElementById('test-videos-grid');
-  const scratchpad = document.getElementById('test-scratchpad-input');
-  
   if (!grid) return;
   
-  // Prevent duplicate binding
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
 
-  // Load the YouTube IFrame API script
+  // Load YouTube IFrame API script
   loadYTAPI();
 
   // Force update button
@@ -4488,23 +4485,6 @@ function initTestVideoSection() {
         }
       } catch(e) { /* ignore */ }
       location.reload(true);
-    });
-  }
-
-  // Scratchpad
-  if (scratchpad) {
-    scratchpad.value = localStorage.getItem('test_scratchpad_answers') || '';
-    scratchpad.addEventListener('input', () => {
-      localStorage.setItem('test_scratchpad_answers', scratchpad.value);
-    });
-  }
-  const clearBtn = document.getElementById('btn-clear-scratchpad');
-  if (clearBtn && scratchpad) {
-    clearBtn.addEventListener('click', () => {
-      if (confirm('Bạn có muốn xóa toàn bộ tờ điền đáp án?')) {
-        scratchpad.value = '';
-        localStorage.setItem('test_scratchpad_answers', '');
-      }
     });
   }
 
@@ -4536,7 +4516,6 @@ function initTestVideoSection() {
         const ytHref = listId ? `https://www.youtube.com/watch?v=${videoId}&list=${listId}` : `https://www.youtube.com/watch?v=${videoId}`;
         playYTVideo(videoId, listId, '▶ ' + url, ytHref);
       } else if (listId) {
-        // Playlist-only: use first video placeholder, YT API will handle list
         playYTVideo('', listId, '▶ Playlist YouTube', url);
       } else {
         window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
@@ -4544,52 +4523,6 @@ function initTestVideoSection() {
     };
     btnCustom.addEventListener('click', handlePlay);
     inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
-  }
-
-  // Exam Countdown Timer
-  const timerDisplay = document.getElementById('exam-timer-display');
-  const btnTimerToggle = document.getElementById('btn-timer-toggle');
-  const btnTimerReset = document.getElementById('btn-timer-reset');
-
-  function updateTimerUI() {
-    if (timerDisplay) timerDisplay.textContent = formatSeconds(_examTimerSeconds);
-  }
-
-  if (btnTimerToggle) {
-    btnTimerToggle.addEventListener('click', () => {
-      if (_examTimerRunning) {
-        clearInterval(_examTimerInterval);
-        _examTimerRunning = false;
-        btnTimerToggle.textContent = '▶ Chạy';
-        btnTimerToggle.style.background = '#0284C7';
-      } else {
-        _examTimerRunning = true;
-        btnTimerToggle.textContent = '❚❚ Tạm dừng';
-        btnTimerToggle.style.background = '#D97706';
-        _examTimerInterval = setInterval(() => {
-          if (_examTimerSeconds > 0) {
-            _examTimerSeconds--;
-            updateTimerUI();
-          } else {
-            clearInterval(_examTimerInterval);
-            _examTimerRunning = false;
-            btnTimerToggle.textContent = '▶ Chạy';
-            btnTimerToggle.style.background = '#0284C7';
-            alert('⏰ Hết giờ làm bài thi Hören!');
-          }
-        }, 1000);
-      }
-    });
-  }
-
-  if (btnTimerReset) {
-    btnTimerReset.addEventListener('click', () => {
-      clearInterval(_examTimerInterval);
-      _examTimerRunning = false;
-      if (btnTimerToggle) { btnTimerToggle.textContent = '▶ Chạy'; btnTimerToggle.style.background = '#0284C7'; }
-      _examTimerSeconds = 35 * 60;
-      updateTimerUI();
-    });
   }
 
   // Render exam deck cards
@@ -4600,29 +4533,21 @@ function initTestVideoSection() {
       const card = document.createElement('div');
       card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow 0.15s;';
       card.innerHTML = `
-        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎧</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎬</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} · YouTube IFrame API · playsinline=1</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} · Video YouTube</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};">${item.levelLabel}</span>
-          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Phát ngay</span>
+          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Xem ngay</span>
         </div>
       `;
       card.addEventListener('click', () => {
-        // Extract videoId from ytUrl
         const videoMatch = item.ytUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/);
         const videoId = videoMatch ? videoMatch[1] : '';
         const listMatch = item.ytUrl.match(/[?&]list=([A-Za-z0-9_-]+)/);
         const listId = listMatch ? listMatch[1] : null;
-        // Set timer for this exam
-        clearInterval(_examTimerInterval);
-        _examTimerRunning = false;
-        if (btnTimerToggle) { btnTimerToggle.textContent = '▶ Chạy'; btnTimerToggle.style.background = '#0284C7'; }
-        _examTimerSeconds = (item.examTimeMinutes || 35) * 60;
-        updateTimerUI();
-        // Play via official IFrame API
         playYTVideo(videoId, listId, item.title, item.ytUrl);
       });
       card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
@@ -4630,7 +4555,7 @@ function initTestVideoSection() {
       grid.appendChild(card);
     });
     if (filtered.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có bài thi cho cấp độ này</div>';
+      grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có video cho cấp độ này</div>';
     }
   }
 
@@ -4648,3 +4573,4 @@ function initTestVideoSection() {
 
   renderExamList('all');
 }
+

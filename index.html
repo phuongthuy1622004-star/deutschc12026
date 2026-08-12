@@ -184,7 +184,7 @@
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v48</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v49</div>
       </div>
     </section>
       
@@ -230,33 +230,28 @@
         </div>
       </section>
       
-      <!-- 4. TAB TEST SECTION — YouTube IFrame Player API + Exam Timer -->
+      <!-- 4. TAB TEST SECTION — Clean YouTube Embed Video Player -->
       <section id="test-page" class="page safe-padding-top safe-padding-bottom" style="padding-bottom: 90px; overflow-y: auto;">
         
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
             <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">Listening Practice 🎧</div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Phát video YouTube trực tiếp trong app • Bấm giờ thi</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Phát video YouTube trực tiếp trong app</div>
           </div>
           <div style="display: flex; gap: 6px; align-items: center;">
             <button type="button" id="btn-force-update-test" title="Xóa cache và tải lại app" style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 6px 8px; font-size: 11px; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap;">🔄 Update</button>
           </div>
         </div>
 
-        <!-- YouTube IFrame API Player Container -->
+        <!-- YouTube Video Player Container -->
         <div id="yt-api-player-wrapper" style="background: #0F172A; border-radius: 20px; overflow: hidden; margin-bottom: 14px; display: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);">
-          <!-- IFrame API will inject <iframe> into this div -->
+          <!-- IFrame API / HTML5 Video player div -->
           <div id="yt-api-player-div" style="width: 100%; aspect-ratio: 16/9;"></div>
-          <!-- Player Controls Bar -->
-          <div style="padding: 10px 14px; background: #1E293B; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-            <div style="flex:1; min-width:0;">
-              <div id="yt-api-video-title" style="font-size: 12px; font-weight: 700; color: #F1F5F9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Chưa chọn video</div>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center; flex-shrink:0;">
-              <a id="yt-api-open-yt" href="#" target="_blank" rel="noopener" style="background: #EF4444; color: white; border-radius: 6px; padding: 4px 9px; font-size: 10px; font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 3px;">▶ YouTube</a>
-              <button type="button" id="btn-yt-api-close" style="background: rgba(255,255,255,0.1); color: #94A3B8; border: none; border-radius: 6px; padding: 4px 9px; font-size: 10px; font-weight: 700; cursor: pointer;">✕ Đóng</button>
-            </div>
+          <!-- Player Title Bar -->
+          <div style="padding: 10px 14px; background: #1E293B; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div id="yt-api-video-title" style="font-size: 12px; font-weight: 700; color: #F1F5F9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">Chưa chọn video</div>
+            <button type="button" id="btn-yt-api-close" style="background: rgba(255,255,255,0.1); color: #94A3B8; border: none; border-radius: 6px; padding: 4px 9px; font-size: 10px; font-weight: 700; cursor: pointer; flex-shrink: 0;">✕ Đóng Player</button>
           </div>
         </div>
 
@@ -268,26 +263,14 @@
           <div style="display: flex; gap: 8px;">
             <input type="text" id="custom-youtube-url" class="form-input" placeholder="https://youtu.be/... hoặc video ID" style="border-radius: 8px; font-size: 12px; height: 40px; padding: 0 10px; flex: 1;">
             <button type="button" id="btn-play-custom-youtube" class="btn-primary" style="margin: 0; padding: 0 14px; font-size: 13px; height: 40px; border-radius: 8px; width: auto; white-space: nowrap;">
-              ▶ Phát
+              ▶ Phát Video
             </button>
           </div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">💡 Dùng YouTube IFrame Player API chính thức — hỗ trợ <code>playsinline=1</code> cho iOS</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">💡 Dán bất kỳ link video YouTube nào → nhấn Phát Video để xem trực tiếp</div>
         </div>
 
-        <!-- Exam Timer Row -->
-        <div style="background: linear-gradient(135deg,#1E293B,#0F172A); border-radius: 16px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-          <div>
-            <div style="font-size: 11px; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">⏱ Bấm giờ thi</div>
-            <div id="exam-timer-display" style="font-size: 22px; font-family: monospace; font-weight: 800; color: #38BDF8; line-height:1.1;">35:00</div>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button type="button" id="btn-timer-toggle" style="background: #0284C7; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700; cursor: pointer;">▶ Chạy</button>
-            <button type="button" id="btn-timer-reset" style="background: rgba(255,255,255,0.12); color: #CBD5E1; border: none; border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer;">↺</button>
-          </div>
-        </div>
-
-        <!-- Exam List -->
-        <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px;">📋 Danh sách Bài thi Hören Goethe / Telc:</div>
+        <!-- Video List -->
+        <div style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px;">🎬 Danh sách Video luyện nghe (nhấn để xem):</div>
         
         <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; -webkit-overflow-scrolling: touch;" id="test-level-filters">
           <button type="button" class="segment-btn active" data-level="all" style="padding: 6px 12px; font-size: 11px; border-radius: 20px; white-space: nowrap;">Tất cả</button>
@@ -299,17 +282,6 @@
 
         <div id="test-videos-grid" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
           <!-- Injected dynamically in app.js -->
-        </div>
-
-        <!-- Answer Sheet -->
-        <div style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 14px; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-              <span>📝</span> Tờ điền đáp án bài thi Hören (Tự động lưu)
-            </div>
-            <button type="button" id="btn-clear-scratchpad" style="background: #FEE2E2; border: none; border-radius: 6px; padding: 3px 8px; font-size: 11px; color: #DC2626; font-weight: 700; cursor: pointer;">Xóa nháp</button>
-          </div>
-          <textarea id="test-scratchpad-input" class="form-input" rows="5" placeholder="Ghi đáp án Teil 1, Teil 2, Teil 3, Teil 4 tại đây...&#10;Ví dụ:&#10;Teil 1: 1.a  2.b  3.c  4.a  5.c&#10;Teil 2: 6.Richtig  7.Falsch  8.Richtig&#10;Teil 3: 9.b  10.c  11.a&#10;Teil 4: 12.Falsch  13.Richtig" style="border-radius: 10px; font-size: 12px; font-family: monospace; padding: 10px; width: 100%; resize: vertical; line-height: 1.5;"></textarea>
         </div>
 
       </section>
