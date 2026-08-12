@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=40')
+    navigator.serviceWorker.register('./sw.js?v=41')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -4469,6 +4469,10 @@ function initTestVideoSection() {
       }
     }
     return { videoId, startTime };
+  }
+
+  function parseYouTubeId(url) {
+    return parseYouTubeUrlInfo(url).videoId || '';
   }
 
   // Helper: swap iframe src with new video — uses youtube-nocookie.com, origin param, strict-origin-when-cross-origin
