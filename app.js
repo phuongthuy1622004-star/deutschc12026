@@ -4361,22 +4361,115 @@ let _examTimerInterval = null;
 let _examTimerSeconds = 35 * 60;
 let _examTimerRunning = false;
 
+// YouTube IFrame Player API global instance
+let _ytPlayer = null;
+let _ytApiReady = false;
+
+// Called automatically by YouTube IFrame API script when loaded
+window.onYouTubeIframeAPIReady = function() {
+  _ytApiReady = true;
+  console.log('[YT API] YouTube IFrame Player API ready');
+};
+
 function formatSeconds(secs) {
   const m = Math.floor(secs / 60);
   const s = Math.floor(secs % 60);
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+// Load YouTube IFrame API script once
+function loadYTAPI() {
+  if (document.getElementById('yt-iframe-api-script')) return;
+  const tag = document.createElement('script');
+  tag.id = 'yt-iframe-api-script';
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}
+
+// Create or update YT.Player with a video ID
+function playYTVideo(videoId, listId, title, ytHref) {
+  const wrapper = document.getElementById('yt-api-player-wrapper');
+  const titleEl = document.getElementById('yt-api-video-title');
+  const ytLink = document.getElementById('yt-api-open-yt');
+
+  if (!wrapper) return;
+  wrapper.style.display = 'block';
+  if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
+  if (ytLink) ytLink.href = ytHref || `https://www.youtube.com/watch?v=${videoId}`;
+  wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const playerVars = {
+    autoplay: 1,
+    playsinline: 1,        // KEY: Prevent iOS from opening fullscreen / YouTube app
+    rel: 0,
+    modestbranding: 1,
+    enablejsapi: 1,
+    origin: location.origin
+  };
+  if (listId) playerVars.list = listId;
+
+  if (_ytPlayer && typeof _ytPlayer.loadVideoById === 'function') {
+    // Reuse existing player — just load new video
+    if (listId) {
+      _ytPlayer.loadPlaylist({ list: listId, listType: 'playlist' });
+    } else {
+      _ytPlayer.loadVideoById(videoId);
+    }
+    return;
+  }
+
+  // Clear any stale div content and recreate
+  const slot = document.getElementById('yt-api-player-div');
+  if (slot) slot.innerHTML = '';
+
+  if (_ytApiReady && window.YT && window.YT.Player) {
+    _ytPlayer = new window.YT.Player('yt-api-player-div', {
+      videoId: videoId,
+      playerVars: playerVars,
+      events: {
+        onReady: (e) => { e.target.playVideo(); },
+        onError: (e) => {
+          console.warn('[YT API] Player error code:', e.data);
+          // Error 150/151 = video blocked by owner for embeds
+          if (e.data === 150 || e.data === 101) {
+            if (ytLink) {
+              ytLink.textContent = '⚠️ Video bị khóa – Mở YouTube';
+              ytLink.style.background = '#EA580C';
+            }
+          }
+        }
+      }
+    });
+  } else {
+    // API not ready yet — poll until ready then create player
+    const interval = setInterval(() => {
+      if (_ytApiReady && window.YT && window.YT.Player) {
+        clearInterval(interval);
+        _ytPlayer = new window.YT.Player('yt-api-player-div', {
+          videoId: videoId,
+          playerVars: playerVars,
+          events: {
+            onReady: (e) => { e.target.playVideo(); },
+            onError: (e) => { console.warn('[YT API] Error:', e.data); }
+          }
+        });
+      }
+    }, 200);
+  }
+}
+
 function initTestVideoSection() {
   const grid = document.getElementById('test-videos-grid');
-  const audioEl = document.getElementById('exam-audio-element');
   const scratchpad = document.getElementById('test-scratchpad-input');
   
-  if (!grid || !audioEl) return;
+  if (!grid) return;
   
   // Prevent duplicate binding
   if (_testSectionInitialized) return;
   _testSectionInitialized = true;
+
+  // Load the YouTube IFrame API script
+  loadYTAPI();
 
   // Force update button
   const forceUpdateBtn = document.getElementById('btn-force-update-test');
@@ -4398,14 +4491,13 @@ function initTestVideoSection() {
     });
   }
 
-  // Scratchpad storage
+  // Scratchpad
   if (scratchpad) {
     scratchpad.value = localStorage.getItem('test_scratchpad_answers') || '';
     scratchpad.addEventListener('input', () => {
       localStorage.setItem('test_scratchpad_answers', scratchpad.value);
     });
   }
-  
   const clearBtn = document.getElementById('btn-clear-scratchpad');
   if (clearBtn && scratchpad) {
     clearBtn.addEventListener('click', () => {
@@ -4416,84 +4508,45 @@ function initTestVideoSection() {
     });
   }
 
-  // Audio Play / Pause controls
-  const btnPlayPause = document.getElementById('btn-audio-play-pause');
-  const progressBar = document.getElementById('exam-audio-progress');
-  const timeCurrent = document.getElementById('exam-audio-time-current');
-  const timeDuration = document.getElementById('exam-audio-time-duration');
-  const btnSkipBack = document.getElementById('btn-audio-skip-back');
-  const btnSkipFwd = document.getElementById('btn-audio-skip-fwd');
-
-  if (btnPlayPause) {
-    btnPlayPause.addEventListener('click', () => {
-      if (!audioEl.src) {
-        loadTrack(TEST_VIDEOS_DATA[0]);
+  // Close YT API player
+  const closeBtn = document.getElementById('btn-yt-api-close');
+  const playerWrapper = document.getElementById('yt-api-player-wrapper');
+  if (closeBtn && playerWrapper) {
+    closeBtn.addEventListener('click', () => {
+      if (_ytPlayer && typeof _ytPlayer.stopVideo === 'function') {
+        _ytPlayer.stopVideo();
       }
-      if (audioEl.paused) {
-        audioEl.play().then(() => {
-          btnPlayPause.textContent = '❚❚';
-        }).catch(err => {
-          alert('Không thể phát file audio này: ' + err.message);
-        });
+      playerWrapper.style.display = 'none';
+    });
+  }
+
+  // Custom YouTube URL input
+  const btnCustom = document.getElementById('btn-play-custom-youtube');
+  const inputCustom = document.getElementById('custom-youtube-url');
+  if (btnCustom && inputCustom) {
+    const handlePlay = () => {
+      const url = inputCustom.value.trim();
+      if (!url) return;
+      const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+      let videoId = videoMatch ? videoMatch[1] : (/^[A-Za-z0-9_-]{11}$/.test(url) ? url : null);
+      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+      const listId = listMatch ? listMatch[1] : null;
+
+      if (videoId) {
+        const ytHref = listId ? `https://www.youtube.com/watch?v=${videoId}&list=${listId}` : `https://www.youtube.com/watch?v=${videoId}`;
+        playYTVideo(videoId, listId, '▶ ' + url, ytHref);
+      } else if (listId) {
+        // Playlist-only: use first video placeholder, YT API will handle list
+        playYTVideo('', listId, '▶ Playlist YouTube', url);
       } else {
-        audioEl.pause();
-        btnPlayPause.textContent = '▶';
+        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
       }
-    });
+    };
+    btnCustom.addEventListener('click', handlePlay);
+    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
   }
 
-  if (btnSkipBack) {
-    btnSkipBack.addEventListener('click', () => {
-      audioEl.currentTime = Math.max(0, audioEl.currentTime - 5);
-    });
-  }
-
-  if (btnSkipFwd) {
-    btnSkipFwd.addEventListener('click', () => {
-      audioEl.currentTime = Math.min(audioEl.duration || 0, audioEl.currentTime + 5);
-    });
-  }
-
-  audioEl.addEventListener('timeupdate', () => {
-    if (!isNaN(audioEl.duration) && audioEl.duration > 0) {
-      const pct = (audioEl.currentTime / audioEl.duration) * 100;
-      if (progressBar) progressBar.value = pct;
-      if (timeCurrent) timeCurrent.textContent = formatSeconds(audioEl.currentTime);
-      if (timeDuration) timeDuration.textContent = formatSeconds(audioEl.duration);
-    }
-  });
-
-  audioEl.addEventListener('ended', () => {
-    if (btnPlayPause) btnPlayPause.textContent = '▶';
-    if (progressBar) progressBar.value = 0;
-  });
-
-  if (progressBar) {
-    progressBar.addEventListener('input', () => {
-      if (!isNaN(audioEl.duration) && audioEl.duration > 0) {
-        audioEl.currentTime = (progressBar.value / 100) * audioEl.duration;
-      }
-    });
-  }
-
-  // Speed controls (0.8x, 1.0x, 1.2x)
-  const speedBtns = document.querySelectorAll('#exam-speed-controls .btn-speed');
-  speedBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      speedBtns.forEach(b => {
-        b.classList.remove('active');
-        b.style.background = 'rgba(255,255,255,0.06)';
-        b.style.color = '#94A3B8';
-      });
-      btn.classList.add('active');
-      btn.style.background = 'rgba(255,255,255,0.2)';
-      btn.style.color = 'white';
-      const speed = parseFloat(btn.getAttribute('data-speed')) || 1.0;
-      audioEl.playbackRate = speed;
-    });
-  });
-
-  // Countdown Exam Timer Controls
+  // Exam Countdown Timer
   const timerDisplay = document.getElementById('exam-timer-display');
   const btnTimerToggle = document.getElementById('btn-timer-toggle');
   const btnTimerReset = document.getElementById('btn-timer-reset');
@@ -4533,126 +4586,54 @@ function initTestVideoSection() {
     btnTimerReset.addEventListener('click', () => {
       clearInterval(_examTimerInterval);
       _examTimerRunning = false;
-      if (btnTimerToggle) {
-        btnTimerToggle.textContent = '▶ Chạy';
-        btnTimerToggle.style.background = '#0284C7';
-      }
+      if (btnTimerToggle) { btnTimerToggle.textContent = '▶ Chạy'; btnTimerToggle.style.background = '#0284C7'; }
       _examTimerSeconds = 35 * 60;
       updateTimerUI();
     });
   }
 
-  // Load custom audio MP3 link
-  const btnCustomAudio = document.getElementById('btn-load-custom-audio');
-  const inputCustomAudio = document.getElementById('custom-audio-url');
-  if (btnCustomAudio && inputCustomAudio) {
-    btnCustomAudio.addEventListener('click', () => {
-      const url = inputCustomAudio.value.trim();
-      if (!url) return;
-      
-      loadTrack({
-        title: 'Audio tùy chỉnh: ' + url.substring(url.lastIndexOf('/') + 1),
-        levelLabel: 'CUSTOM AUDIO',
-        badgeBg: 'rgba(245,158,11,0.2)',
-        badgeColor: '#FBBF24',
-        audioUrl: url,
-        ytUrl: url,
-        examTimeMinutes: 30
-      });
-    });
-  }
-
-  // Load Track Function
-  function loadTrack(item) {
-    if (item.audioUrl) {
-      audioEl.src = item.audioUrl;
-      audioEl.load();
-      if (btnPlayPause) btnPlayPause.textContent = '▶';
-      if (timeCurrent) timeCurrent.textContent = '00:00';
-      if (timeDuration) timeDuration.textContent = item.duration || '--:--';
-    } else {
-      audioEl.removeAttribute('src');
-      if (btnPlayPause) btnPlayPause.textContent = '▶';
-      if (timeCurrent) timeCurrent.textContent = '00:00';
-      if (timeDuration) timeDuration.textContent = 'YouTube';
-    }
-
-    const titleEl = document.getElementById('exam-audio-title');
-    const subtitleEl = document.getElementById('exam-audio-subtitle');
-    const badgeEl = document.getElementById('exam-audio-badge');
-    const ytLink = document.getElementById('btn-open-yt-video');
-
-    if (titleEl) titleEl.textContent = item.title;
-    if (subtitleEl) {
-      subtitleEl.textContent = item.audioUrl
-        ? 'Audio bài thi nghe Teil 1 – Teil 4'
-        : '▶ Nhấn nút đỏ YouTube bên dưới để mở audio/video bài thi này';
-    }
-    if (badgeEl) {
-      badgeEl.textContent = item.levelLabel;
-      badgeEl.style.background = item.badgeBg;
-      badgeEl.style.color = item.badgeColor;
-    }
-    if (ytLink) {
-      ytLink.href = item.ytUrl || '#';
-      ytLink.style.display = item.ytUrl ? 'inline-flex' : 'none';
-    }
-
-    // Reset timer to track's exam time
-    if (item.examTimeMinutes) {
-      clearInterval(_examTimerInterval);
-      _examTimerRunning = false;
-      if (btnTimerToggle) {
-        btnTimerToggle.textContent = '▶ Chạy';
-        btnTimerToggle.style.background = '#0284C7';
-      }
-      _examTimerSeconds = item.examTimeMinutes * 60;
-      updateTimerUI();
-    }
-
-    // Scroll to player box
-    const playerBox = document.getElementById('exam-audio-title');
-    if (playerBox) playerBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  // Render Exam Decks List
+  // Render exam deck cards
   function renderExamList(levelFilter = 'all') {
     grid.innerHTML = '';
-    
-    const filtered = TEST_VIDEOS_DATA.filter(item => {
-      if (levelFilter === 'all') return true;
-      return item.level === levelFilter;
-    });
-
+    const filtered = TEST_VIDEOS_DATA.filter(item => levelFilter === 'all' || item.level === levelFilter);
     filtered.forEach(item => {
       const card = document.createElement('div');
-      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;';
-      
+      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:box-shadow 0.15s;';
       card.innerHTML = `
         <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎧</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} • Mở trên YouTube + Bấm giờ thi</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} · YouTube IFrame API · playsinline=1</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};">${item.levelLabel}</span>
-          <span style="font-size:10px;color:#EF4444;font-weight:800;">▶ Mở thi</span>
+          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Phát ngay</span>
         </div>
       `;
-
-      card.addEventListener('click', () => loadTrack(item));
+      card.addEventListener('click', () => {
+        // Extract videoId from ytUrl
+        const videoMatch = item.ytUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+        const videoId = videoMatch ? videoMatch[1] : '';
+        const listMatch = item.ytUrl.match(/[?&]list=([A-Za-z0-9_-]+)/);
+        const listId = listMatch ? listMatch[1] : null;
+        // Set timer for this exam
+        clearInterval(_examTimerInterval);
+        _examTimerRunning = false;
+        if (btnTimerToggle) { btnTimerToggle.textContent = '▶ Chạy'; btnTimerToggle.style.background = '#0284C7'; }
+        _examTimerSeconds = (item.examTimeMinutes || 35) * 60;
+        updateTimerUI();
+        // Play via official IFrame API
+        playYTVideo(videoId, listId, item.title, item.ytUrl);
+      });
       card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
       card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
-
       grid.appendChild(card);
     });
-
     if (filtered.length === 0) {
       grid.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:13px">Chưa có bài thi cho cấp độ này</div>';
     }
   }
 
-  // Level filter tabs
   const filterContainer = document.getElementById('test-level-filters');
   if (filterContainer) {
     filterContainer.addEventListener('click', (e) => {
@@ -4665,7 +4646,5 @@ function initTestVideoSection() {
     });
   }
 
-  // Initial render & default track load
   renderExamList('all');
-  loadTrack(TEST_VIDEOS_DATA[0]);
 }
