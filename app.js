@@ -4312,78 +4312,72 @@ document.addEventListener('click', unlockIOSAudio, { capture: true });
 
 // -------------------------------------------------------------
 // TEST & EXAM PRACTICE VIDEO SECTION (LEARN GERMAN 303 & GOETHE/TELC)
+// Cards open YouTube search — embed only via custom paste link
 // -------------------------------------------------------------
 const TEST_VIDEOS_DATA = [
   {
     id: 'v1',
-    videoId: 'videoseries?list=PL7H1-d6FqS3oRBhQk-Zt1V6_vM5e09-0d',
-    isPlaylist: true,
-    title: 'Learn German 303 - Goethe & ÖIF Listening Test Playlist',
+    searchUrl: 'https://www.youtube.com/@Learngerman303/videos',
+    title: 'Kênh Learn German 303 – Goethe & ÖIF Hören',
     level: '303',
     levelLabel: 'Learn German 303',
-    duration: 'Danh sách video',
-    channel: 'Learn German 303',
-    thumb: 'https://images.pexels.com/photos/4050315/pexels-photo-4050315.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '📺',
+    desc: 'Tất cả video luyện nghe Goethe / ÖIF / Telc chính thức',
     badgeBg: '#FEF3C7',
     badgeColor: '#D97706'
   },
   {
     id: 'v2',
-    videoId: 'jNQXAC9IVRw',
-    title: 'Goethe-Zertifikat A1 Hören - Modelltest 1 (mit Lösungen)',
+    searchUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A1+H%C3%B6ren+Modelltest',
+    title: 'Goethe A1 – Hören Modelltest',
     level: 'a1a2',
     levelLabel: 'Goethe A1',
-    duration: '22:15',
-    channel: 'Learn German 303',
-    thumb: 'https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '🔊',
+    desc: 'Luyện nghe A1 – Start Deutsch 1 chính thức',
     badgeBg: '#DBEAFE',
     badgeColor: '#1E40AF'
   },
   {
     id: 'v3',
-    videoId: 'm86p_0K168Y',
-    title: 'Goethe & ÖIF TEST A2 Hören II Übungstest mit Lösungen',
+    searchUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A2+H%C3%B6ren+Modelltest',
+    title: 'Goethe A2 – Hören Modelltest',
     level: 'a1a2',
     levelLabel: 'Goethe A2',
-    duration: '25:40',
-    channel: 'Learn German 303',
-    thumb: 'https://images.pexels.com/photos/5905710/pexels-photo-5905710.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '🔊',
+    desc: 'Luyện nghe A2 Goethe / ÖIF chính thức',
     badgeBg: '#DBEAFE',
     badgeColor: '#1E40AF'
   },
   {
     id: 'v4',
-    videoId: 'L_LUpnjgPso',
-    title: 'Goethe-Zertifikat B1 Hören Modelltest FULL mit Antworten',
+    searchUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B1+H%C3%B6ren+Modelltest',
+    title: 'Goethe B1 – Hören Modelltest',
     level: 'b1',
     levelLabel: 'Goethe B1',
-    duration: '38:10',
-    channel: 'Learn German 303',
-    thumb: 'https://images.pexels.com/photos/5905712/pexels-photo-5905712.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '🎧',
+    desc: 'Bài thi nghe B1 đầy đủ có đáp án',
     badgeBg: '#E0E7FF',
     badgeColor: '#3730A3'
   },
   {
     id: 'v5',
-    videoId: 'kJQP7kiw5Fk',
-    title: 'Goethe & Telc B2 Hören Teil 1, 2, 3 - Luyện nghe B2 nâng cao',
+    searchUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B2+H%C3%B6ren+Modelltest',
+    title: 'Goethe B2 – Hören Modelltest',
     level: 'b2',
     levelLabel: 'Goethe B2',
-    duration: '42:00',
-    channel: 'German Exam Prep',
-    thumb: 'https://images.pexels.com/photos/4050318/pexels-photo-4050318.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '🎧',
+    desc: 'Luyện nghe B2 nâng cao có lời giải',
     badgeBg: '#F3E8FF',
     badgeColor: '#6B21A8'
   },
   {
     id: 'v6',
-    videoId: 'fJ9rUzIMcZQ',
-    title: 'Telc & Goethe C1 Hören Trainer - Bài thi nghe C1 thực tế có đáp án',
+    searchUrl: 'https://www.youtube.com/results?search_query=Telc+C1+H%C3%B6ren+Modelltest',
+    title: 'Telc C1 – Hören Modelltest',
     level: 'c1',
     levelLabel: 'C1 / Telc C1',
-    duration: '45:30',
-    channel: 'C1 Exam Trainer',
-    thumb: 'https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&h=180',
+    icon: '🏆',
+    desc: 'Bài thi nghe C1 thực tế – Telc & Goethe',
     badgeBg: '#FCE7F3',
     badgeColor: '#9D174D'
   }
@@ -4394,10 +4388,10 @@ let _testSectionInitialized = false;
 function initTestVideoSection() {
   const grid = document.getElementById('test-videos-grid');
   const iframe = document.getElementById('test-video-iframe');
-  const countEl = document.getElementById('test-video-count');
+  const playerWrapper = document.getElementById('test-player-wrapper');
   const scratchpad = document.getElementById('test-scratchpad-input');
   
-  if (!grid || !iframe) return;
+  if (!grid) return;
   
   // Prevent duplicate binding
   if (_testSectionInitialized) return;
@@ -4420,61 +4414,55 @@ function initTestVideoSection() {
       }
     });
   }
+
+  // Close player button
+  const closePlayerBtn = document.getElementById('btn-close-player');
+  if (closePlayerBtn && playerWrapper && iframe) {
+    closePlayerBtn.addEventListener('click', () => {
+      iframe.src = '';
+      playerWrapper.style.display = 'none';
+    });
+  }
+
+  // Helper to show player with a video ID
+  function showPlayer(videoId, title) {
+    if (!iframe || !playerWrapper) return;
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    playerWrapper.style.display = 'block';
+    const titleEl = document.getElementById('test-video-current-title');
+    const ytLink = document.getElementById('test-video-open-yt');
+    if (titleEl) titleEl.textContent = title || '▶ Đang phát video';
+    if (ytLink) ytLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+    playerWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   
   // Custom YouTube URL submit listener
   const btnCustom = document.getElementById('btn-play-custom-youtube');
   const inputCustom = document.getElementById('custom-youtube-url');
   if (btnCustom && inputCustom) {
-    btnCustom.addEventListener('click', () => {
+    const handlePlay = () => {
       const url = inputCustom.value.trim();
       if (!url) return;
-      
-      let videoId = url;
-      // Extract video ID from full YouTube URLs
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      // Extract video ID from YouTube URLs
+      const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/;
       const match = url.match(regExp);
-      if (match && match[2] && match[2].length === 11) {
-        videoId = match[2];
+      let videoId = null;
+      if (match && match[1]) {
+        videoId = match[1];
+      } else if (/^[A-Za-z0-9_-]{11}$/.test(url)) {
+        videoId = url;
       }
-      
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-      document.getElementById('test-video-current-title').textContent = '▶ YouTube Video: ' + (match ? videoId : url);
-      document.getElementById('test-video-current-subtitle').textContent = 'Xem trực tiếp trong app';
-      const badge = document.getElementById('test-video-current-badge');
-      if (badge) {
-        badge.textContent = 'CUSTOM VIDEO';
-        badge.style.background = '#FEF3C7';
-        badge.style.color = '#D97706';
+      if (videoId) {
+        showPlayer(videoId, '▶ ' + url);
+      } else {
+        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
       }
-      
-      // Scroll to video player
-      iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
+    };
+    btnCustom.addEventListener('click', handlePlay);
+    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
   }
   
-  // Function to play a video item
-  window.playTestVideoItem = function(item) {
-    let embedSrc = `https://www.youtube.com/embed/${item.videoId}?autoplay=1&rel=0`;
-    if (item.isPlaylist) {
-      embedSrc = `https://www.youtube.com/embed/${item.videoId}`;
-    }
-    iframe.src = embedSrc;
-    
-    document.getElementById('test-video-current-title').textContent = item.title;
-    document.getElementById('test-video-current-subtitle').textContent = `${item.channel} • ${item.duration}`;
-    
-    const badge = document.getElementById('test-video-current-badge');
-    if (badge) {
-      badge.textContent = item.levelLabel;
-      badge.style.background = item.badgeBg;
-      badge.style.color = item.badgeColor;
-    }
-    
-    // Scroll smoothly to top player
-    iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-  
-  // Render video list
+  // Render video link cards (open YouTube search/channel — no embed)
   function renderVideos(levelFilter = 'all') {
     grid.innerHTML = '';
     
@@ -4483,34 +4471,25 @@ function initTestVideoSection() {
       return item.level === levelFilter;
     });
     
-    if (countEl) {
-      countEl.textContent = `${filtered.length} bài thi / video`;
-    }
-    
     filtered.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'test-video-card';
-      
-      const thumbUrl = item.isPlaylist 
-        ? item.thumb 
-        : `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
-      
+      const card = document.createElement('a');
+      card.href = item.searchUrl;
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
+      card.style.cssText = 'display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-color);border-radius:14px;padding:12px 14px;text-decoration:none;color:inherit;box-shadow:var(--shadow-sm);transition:box-shadow 0.18s;';
       card.innerHTML = `
-        <div class="test-video-thumb">
-          <img src="${thumbUrl}" alt="${item.title}" onerror="this.src='${item.thumb}'">
-          <div class="test-video-play-btn">▶</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${item.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.title}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${item.desc}</div>
         </div>
-        <div class="test-video-info">
-          <span class="test-video-badge" style="background: ${item.badgeBg}; color: ${item.badgeColor};">${item.levelLabel}</span>
-          <div class="test-video-title">${item.title}</div>
-          <div class="test-video-meta">📺 ${item.channel} • ⏱️ ${item.duration}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor}">${item.levelLabel}</span>
+          <span style="font-size:10px;color:#FF0000;font-weight:700">▶ YouTube</span>
         </div>
       `;
-      
-      card.addEventListener('click', () => {
-        playTestVideoItem(item);
-      });
-      
+      card.addEventListener('mouseenter', () => { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; });
+      card.addEventListener('mouseleave', () => { card.style.boxShadow = 'var(--shadow-sm)'; });
       grid.appendChild(card);
     });
   }
@@ -4523,8 +4502,7 @@ function initTestVideoSection() {
       if (btn) {
         filterContainer.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const level = btn.getAttribute('data-level');
-        renderVideos(level);
+        renderVideos(btn.getAttribute('data-level'));
       }
     });
   }
