@@ -4278,18 +4278,41 @@ function startDailyTaskSwipeStudy() {
 // -------------------------------------------------------------
 // iOS PWA SPEECH & HTML5 AUDIO UNLOCKER
 // -------------------------------------------------------------
-// iOS PWA SPEECH UNLOCKER
-// iOS requires a synchronous user gesture to unlock Spee// -------------------------------------------------------------
+let _iosAudioUnlocked = false;
+
+function unlockIOSAudio() {
+  if (_iosAudioUnlocked) return;
+  _iosAudioUnlocked = true;
+
+  if ('speechSynthesis' in window) {
+    const silent = new SpeechSynthesisUtterance('\u200B');
+    silent.volume = 0;
+    silent.rate = 1;
+    silent.lang = 'de-DE';
+    window.speechSynthesis.speak(silent);
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) window._cachedVoices = voices;
+  }
+
+  document.removeEventListener('touchstart', unlockIOSAudio, true);
+  document.removeEventListener('click', unlockIOSAudio, true);
+}
+
+document.addEventListener('touchstart', unlockIOSAudio, { capture: true, passive: true });
+document.addEventListener('click', unlockIOSAudio, { capture: true });
+
+// -------------------------------------------------------------
 // TEST & EXAM PRACTICE AUDIO HUB (IN-APP HÖREN PLAYER & EXAM TIMER)
 // -------------------------------------------------------------
 const TEST_VIDEOS_DATA = [
   {
     id: 'b1_01',
-    title: 'Goethe B1 Hören – Modelltest 01 (Teil 1–4)',
+    title: 'Goethe B1 Hören – Modelltest 01 (Teil 1–4 mit Lösungen)',
     level: 'b1',
     levelLabel: 'GOETHE B1',
     duration: '35:00',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    audioUrl: '',
     ytUrl: 'https://www.youtube.com/watch?v=xNfRxP9Y14o&list=PLbDMpBQZMplVZ8511hhuZZ36uSk_Ocpav',
     badgeBg: 'rgba(59,130,246,0.2)',
     badgeColor: '#60A5FA',
@@ -4297,11 +4320,11 @@ const TEST_VIDEOS_DATA = [
   },
   {
     id: 'b2_01',
-    title: 'Goethe & Telc B2 Hören – Modelltest 01',
+    title: 'Goethe & Telc B2 Hören – Modelltest FULL mit Antworten',
     level: 'b2',
     levelLabel: 'GOETHE B2',
     duration: '40:00',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    audioUrl: '',
     ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+B2+H%C3%B6ren+Modelltest',
     badgeBg: 'rgba(168,85,247,0.2)',
     badgeColor: '#C084FC',
@@ -4309,11 +4332,11 @@ const TEST_VIDEOS_DATA = [
   },
   {
     id: 'c1_01',
-    title: 'Telc & Goethe C1 Hören – Trainer 01',
+    title: 'Telc & Goethe C1 Hören Trainer – Bài thi nghe C1 có đáp án',
     level: 'c1',
     levelLabel: 'C1 / TELC C1',
     duration: '40:00',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    audioUrl: '',
     ytUrl: 'https://www.youtube.com/results?search_query=Telc+C1+H%C3%B6ren+Modelltest',
     badgeBg: 'rgba(236,72,153,0.2)',
     badgeColor: '#F472B6',
@@ -4325,7 +4348,7 @@ const TEST_VIDEOS_DATA = [
     level: 'a1a2',
     levelLabel: 'GOETHE A1',
     duration: '20:00',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+    audioUrl: '',
     ytUrl: 'https://www.youtube.com/results?search_query=Goethe+Zertifikat+A1+H%C3%B6ren+Modelltest',
     badgeBg: 'rgba(245,158,11,0.2)',
     badgeColor: '#FBBF24',
@@ -4541,23 +4564,39 @@ function initTestVideoSection() {
 
   // Load Track Function
   function loadTrack(item) {
-    audioEl.src = item.audioUrl;
-    audioEl.load();
-    if (btnPlayPause) btnPlayPause.textContent = '▶';
-    if (timeCurrent) timeCurrent.textContent = '00:00';
-    if (timeDuration) timeDuration.textContent = item.duration || '--:--';
+    if (item.audioUrl) {
+      audioEl.src = item.audioUrl;
+      audioEl.load();
+      if (btnPlayPause) btnPlayPause.textContent = '▶';
+      if (timeCurrent) timeCurrent.textContent = '00:00';
+      if (timeDuration) timeDuration.textContent = item.duration || '--:--';
+    } else {
+      audioEl.removeAttribute('src');
+      if (btnPlayPause) btnPlayPause.textContent = '▶';
+      if (timeCurrent) timeCurrent.textContent = '00:00';
+      if (timeDuration) timeDuration.textContent = 'YouTube';
+    }
 
     const titleEl = document.getElementById('exam-audio-title');
+    const subtitleEl = document.getElementById('exam-audio-subtitle');
     const badgeEl = document.getElementById('exam-audio-badge');
     const ytLink = document.getElementById('btn-open-yt-video');
 
     if (titleEl) titleEl.textContent = item.title;
+    if (subtitleEl) {
+      subtitleEl.textContent = item.audioUrl
+        ? 'Audio bài thi nghe Teil 1 – Teil 4'
+        : '▶ Nhấn nút đỏ YouTube bên dưới để mở audio/video bài thi này';
+    }
     if (badgeEl) {
       badgeEl.textContent = item.levelLabel;
       badgeEl.style.background = item.badgeBg;
       badgeEl.style.color = item.badgeColor;
     }
-    if (ytLink) ytLink.href = item.ytUrl || '#';
+    if (ytLink) {
+      ytLink.href = item.ytUrl || '#';
+      ytLink.style.display = item.ytUrl ? 'inline-flex' : 'none';
+    }
 
     // Reset timer to track's exam time
     if (item.examTimeMinutes) {
@@ -4593,11 +4632,11 @@ function initTestVideoSection() {
         <div style="width:44px;height:44px;border-radius:12px;background:${item.badgeBg};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎧</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} • Audio + Bấm giờ thi</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">⏱️ ${item.duration} • Mở trên YouTube + Bấm giờ thi</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${item.badgeBg};color:${item.badgeColor};">${item.levelLabel}</span>
-          <span style="font-size:10px;color:#0284C7;font-weight:800;">▶ Nghe ngay</span>
+          <span style="font-size:10px;color:#EF4444;font-weight:800;">▶ Mở thi</span>
         </div>
       `;
 
