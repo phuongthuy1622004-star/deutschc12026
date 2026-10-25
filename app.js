@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=45')
+    navigator.serviceWorker.register('./sw.js?v=46')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -3584,7 +3584,7 @@ function openStreakGardenModal() {
   // Pools emoji theo tier (cycle qua nếu đạt nhiều lần)
   const emojiPools = {
     100: ['❤️', '🧡', '💛', '💚', '💙', '💜', '💖', '💝'],
-    50:  ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'],
+    15:  ['🍑', '🍓', '🍎', '🍏', '🍐', '🍊', '🍋', '🍒', '🍇', '🍉'],
     10:  ['🌸', '🌷', '🪷', '🌻', '🌹', '🌺', '🌼'],
     5:   ['🌳', '🌲', '🌴', '🎋'],
     1:   ['🌱']
@@ -3593,7 +3593,7 @@ function openStreakGardenModal() {
   // Dead icon theo số ngày bị bỏ
   const deadIconFor = (n) => {
     if (n >= 100) return { emoji: '👻', label: `${n}m` };
-    if (n >= 50)  return { emoji: '☠️', label: `${n}m` };
+    if (n >= 15)  return { emoji: '☠️', label: `${n}m` };
     if (n >= 10)  return { emoji: '🪵', label: `${n}m` };
     if (n >= 5)   return { emoji: '🍂', label: `${n}m` };
     return { emoji: '🌾', label: `${n}m` };
@@ -3617,7 +3617,7 @@ function openStreakGardenModal() {
     };
     
     // Phân bổ từng tier lớn → nhỏ
-    const tiers = [100, 50, 10, 5];
+    const tiers = [100, 15, 10, 5];
     for (const tier of tiers) {
       const count = Math.floor(remaining / tier);
       for (let i = 0; i < count; i++) {
@@ -4516,26 +4516,22 @@ function initTestVideoSection() {
     iframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // HTML5 Native Audio player speed controls
-  const nativeAudio = document.getElementById('native-listening-audio');
-  const speedBtns = document.querySelectorAll('.btn-audio-speed');
-  const speedBadge = document.getElementById('audio-speed-badge');
-  if (nativeAudio && speedBtns.length > 0) {
-    speedBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const speed = parseFloat(btn.getAttribute('data-speed') || '1.0');
-        nativeAudio.playbackRate = speed;
-        speedBtns.forEach(b => {
-          b.style.background = '#F8FAFC';
-          b.style.color = '#334155';
-          b.style.borderColor = '#CBD5E1';
-        });
-        btn.style.background = 'var(--primary)';
-        btn.style.color = 'white';
-        btn.style.borderColor = 'var(--primary)';
-        if (speedBadge) speedBadge.textContent = `${speed}x`;
-      });
-    });
+  // Custom YouTube URL input — change iframe src
+  const btnCustom = document.getElementById('btn-play-custom-youtube');
+  const inputCustom = document.getElementById('custom-youtube-url');
+  if (btnCustom && inputCustom) {
+    const handlePlay = () => {
+      const url = inputCustom.value.trim();
+      if (!url) return;
+      const { videoId, startTime } = parseYouTubeUrlInfo(url);
+      if (videoId) {
+        loadInIframe(videoId, '▶ ' + url, startTime);
+      } else {
+        window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(url), '_blank');
+      }
+    };
+    btnCustom.addEventListener('click', handlePlay);
+    inputCustom.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePlay(); });
   }
 
   // Render video list cards
