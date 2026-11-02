@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=49')
+    navigator.serviceWorker.register('./sw.js?v=50')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -1908,15 +1908,18 @@ function renderSwipeCardStack() {
       <div class="flip-tip">🔄 Tap to flip and see meaning</div>
     `;
     
-    cardEl.querySelector('.audio-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isFlipped = cardEl.querySelector('.card-inner-meaning').style.display !== 'none';
-      if (isFlipped) {
-        speakTranslationSequence(word);
-      } else {
-        speakText(wordText, 'de-DE');
-      }
-    });
+    const wordAudioBtn = cardEl.querySelector('[data-audio]');
+    if (wordAudioBtn) {
+      wordAudioBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isFlipped = cardEl.querySelector('.card-inner-meaning').style.display !== 'none';
+        if (isFlipped) {
+          speakTranslationSequence(word);
+        } else {
+          speakText(wordText, 'de-DE');
+        }
+      });
+    }
 
     // Sentence audio button (separate from word audio btn)
     const sentenceAudioBtn = cardEl.querySelector('[data-sentence-audio]');
