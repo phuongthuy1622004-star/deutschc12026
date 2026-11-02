@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=53')
+    navigator.serviceWorker.register('./sw.js?v=54')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2041,7 +2041,13 @@ function setupSwipeGestures(cardEl, wordId) {
           speakTranslationSequence(word);
           if (tipEl) tipEl.textContent = '🔄 Tap to show German card';
         } else {
-          frontElements.forEach(el => el.style.display = '');
+          frontElements.forEach(el => {
+            if (el.classList.contains('card-image-container')) {
+              el.style.display = 'flex';
+            } else {
+              el.style.display = '';
+            }
+          });
           backElements.style.display = 'none';
           stopAudioPlayback();
           speakText(wordText, 'de-DE');

@@ -550,6 +550,21 @@ h2 {
   text-align: center;
 }
 
+.card-image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.card-image-container img {
+  display: block;
+  margin: 0 auto;
+}
+
 .word-meaning {
   font-size: 20px;
   font-weight: 700;
