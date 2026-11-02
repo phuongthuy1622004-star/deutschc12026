@@ -1891,12 +1891,12 @@ function renderSwipeCardStack() {
       <div class="swipe-indicator left">Still Learning</div>
       <div class="swipe-indicator up">Learning</div>
       
-      ${imageHTML}
+      <div class="word-sentence" style="min-height: 48px; margin-bottom: 14px; text-align: center;">${word.sentence || ''} ${word.sentence ? `<button class="audio-btn" data-sentence-audio="${(word.sentence || '').replace(/"/g, '&quot;')}">🔊</button>` : ''}</div>
       ${typeBadgeHTML}
       
       <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
       <div class="word-ipa">${ipaText}</div>
-      <div class="word-sentence">${word.sentence || ''}</div>
+      ${imageHTML}
       
       <div class="card-inner-meaning" style="display: none; text-align: center; margin-top: 15px; width: 100%; animation: slideUp 0.2s ease;">
         ${meaningsHTML}
@@ -1917,6 +1917,15 @@ function renderSwipeCardStack() {
         speakText(wordText, 'de-DE');
       }
     });
+
+    // Sentence audio button (separate from word audio btn)
+    const sentenceAudioBtn = cardEl.querySelector('[data-sentence-audio]');
+    if (sentenceAudioBtn) {
+      sentenceAudioBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        speakText(sentenceAudioBtn.dataset.sentenceAudio, 'de-DE');
+      });
+    }
     
     if (isTop) {
       setupSwipeGestures(cardEl, word.id);
