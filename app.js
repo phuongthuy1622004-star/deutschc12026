@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=50')
+    navigator.serviceWorker.register('./sw.js?v=51')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2007,7 +2007,7 @@ function setupSwipeGestures(cardEl, wordId) {
     // Check if it is a single tap (small displacement tolerance up to 15px for fast mobile taps)
     const displacement = Math.sqrt(currentX * currentX + currentY * currentY);
     if (displacement < 15) {
-      const frontElements = cardEl.querySelectorAll('.word-display, .word-ipa, .word-sentence');
+      const frontElements = cardEl.querySelectorAll('.word-display, .word-ipa, .word-sentence, .card-image-container, .word-type-badge');
       const backElements = cardEl.querySelector('.card-inner-meaning');
       const tipEl = cardEl.querySelector('.flip-tip');
       
