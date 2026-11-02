@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=46')
+    navigator.serviceWorker.register('./sw.js?v=47')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -2836,6 +2836,17 @@ function formatDate(d) {
   return `${year}-${month}-${day}`;
 }
 
+// Tính khoảng cách ngày chính xác giữa 2 chuỗi YYYY-MM-DD không phụ thuộc timezone/DST
+function getDaysDifference(dateStr1, dateStr2) {
+  if (!dateStr1 || !dateStr2) return 0;
+  const [y1, m1, d1] = String(dateStr1).split('-').map(Number);
+  const [y2, m2, d2] = String(dateStr2).split('-').map(Number);
+  if (!y1 || !y2) return 0;
+  const utc1 = Date.UTC(y1, m1 - 1, d1);
+  const utc2 = Date.UTC(y2, m2 - 1, d2);
+  return Math.round((utc2 - utc1) / 86400000);
+}
+
 function initUserStats() {
   const todayStr = getTodayDateString();
   const lastActiveDate = localStorage.getItem('last_active_date');
@@ -2848,10 +2859,7 @@ function initUserStats() {
   
   if (lastActiveDate && lastActiveDate !== todayStr) {
     // New day! Check missed days
-    const lastDate = new Date(lastActiveDate);
-    const todayDate = new Date(todayStr);
-    const diffTime = Math.abs(todayDate - lastDate);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = getDaysDifference(lastActiveDate, todayStr);
     
     if (diffDays > 2) {
       // Miss từ 2 ngày trở lên (vượt quá grace period 1 ngày)
@@ -2979,11 +2987,11 @@ function calculateStreak() {
   const lastDateStr = streak.last_completed_date;
   
   if (lastDateStr && lastDateStr !== todayStr) {
-    const lastDate = new Date(lastDateStr);
-    const todayDate = new Date(todayStr);
-    const diffTime = Math.abs(todayDate - lastDate);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    // Reset streak nếu miss từ 2 ngày trở lên (miss 1 ngày được grace period)
+    const diffDays = getDaysDifference(lastDateStr, todayStr);
+    // Reset streak nếu miss từ 2 ngày trở lên (diffDays > 2)
+    // diffDays = 1: hôm qua đã học, hôm nay chưa học -> giữ nguyên streak
+    // diffDays = 2: hôm kia đã học, hôm qua miss 1 ngày, hôm nay trong grace period -> GIỮ NGUYÊN streak
+    // diffDays > 2: miss từ 2 ngày trở lên -> reset về 0
     if (diffDays > 2) {
       streak.current_streak = 0;
       StreakService.saveStreakData(streak);
@@ -3785,6 +3793,16 @@ function loadStatsFromDB(callback) {
       const val = taskSnap.val();
       if (val) {
         localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(val));
+        
+        // Nếu task hôm nay đã hoàn thành, đảm bảo ngày hôm nay có trong streak_dates
+        if (val.is_completed || val.is_vocab_completed) {
+          let streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+          if (!streakDates.includes(todayStr)) {
+            streakDates.push(todayStr);
+            streakDates.sort();
+            localStorage.setItem('streak_dates', JSON.stringify(streakDates));
+          }
+        }
       }
       
       // Generate task if missing
@@ -3867,12 +3885,23 @@ const DailyTaskService = {
   
   saveTask(task) {
     if (!task) return;
-    const todayStr = task.date;
-    localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(task));
+    const taskDate = task.date || getTodayDateString();
+    localStorage.setItem(`daily_task_${taskDate}`, JSON.stringify(task));
+    
+    // Đảm bảo nếu task đã hoàn thành thì taskDate PHẢI có trong streak_dates
+    if (task.is_completed || task.is_vocab_completed) {
+      let streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+      if (!streakDates.includes(taskDate)) {
+        streakDates.push(taskDate);
+        streakDates.sort();
+        localStorage.setItem('streak_dates', JSON.stringify(streakDates));
+        saveStatsToDB();
+      }
+    }
     
     // Sync to Firebase if connected
     if (state.isFirebaseInitialized && state.db) {
-      state.db.ref(`daily_tasks/${todayStr}`).set(task)
+      state.db.ref(`daily_tasks/${taskDate}`).set(task)
         .catch(err => console.error('Firebase save daily task error:', err));
     }
   },
@@ -4078,25 +4107,27 @@ const StreakService = {
     // Idempotency: nếu hôm nay đã hoàn thành rồi thì không làm gì
     if (streak.last_completed_date === dateStr) return;
     
-    const yesterdayStr = formatDate(new Date(new Date(dateStr) - 86400000));
-    const dayBeforeYesterdayStr = formatDate(new Date(new Date(dateStr) - 2 * 86400000));
-    
-    if (streak.last_completed_date === yesterdayStr) {
-      // Học liên tiếp — tăng streak bình thường
-      streak.current_streak += 1;
-    } else if (streak.last_completed_date === dayBeforeYesterdayStr) {
-      // Miss đúng 1 ngày — grace period: VẪN TĂNG streak bình thường
-      // (ngày miss được "tha thứ", ngày học tiếp theo vẫn cộng +1)
-      streak.current_streak += 1;
-    } else if (!streak.last_completed_date) {
+    if (!streak.last_completed_date) {
       // Lần đầu tiên học
       streak.current_streak = 1;
     } else {
-      // Miss từ 2 ngày trở lên — reset streak về 1 (ngày hôm nay)
-      streak.current_streak = 1;
+      const diffDays = getDaysDifference(streak.last_completed_date, dateStr);
+      if (diffDays === 1) {
+        // Học liên tiếp — tăng streak bình thường
+        streak.current_streak += 1;
+      } else if (diffDays === 2) {
+        // Miss đúng 1 ngày — grace period: VẪN TĂNG streak bình thường
+        // (ngày miss được "tha thứ", ngày học tiếp theo vẫn cộng +1)
+        streak.current_streak += 1;
+      } else if (diffDays <= 0) {
+        // Ngày trong quá khứ hoặc trùng ngày, không giảm streak
+      } else {
+        // Miss từ 2 ngày trở lên (diffDays > 2) — reset streak về 1 (ngày hôm nay)
+        streak.current_streak = 1;
+      }
     }
     
-    streak.longest_streak = Math.max(streak.longest_streak, streak.current_streak);
+    streak.longest_streak = Math.max(streak.longest_streak || 0, streak.current_streak);
     streak.last_completed_date = dateStr;
     
     this.saveStreakData(streak);
@@ -4127,16 +4158,16 @@ function recalculateStreakFromDates() {
   // Tính streak đúng: duyệt từng ngày, miss 1 ngày không reset, miss 2+ thì reset
   let calculatedStreak = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1]);
-    const curr = new Date(sorted[i]);
-    const diffDays = Math.round((curr - prev) / 86400000);
+    const prev = sorted[i - 1];
+    const curr = sorted[i];
+    const diffDays = getDaysDifference(prev, curr);
     if (diffDays === 1) {
       // Ngày liên tiếp → tăng bình thường
       calculatedStreak++;
     } else if (diffDays === 2) {
       // Miss đúng 1 ngày → grace period, vẫn tăng
       calculatedStreak++;
-    } else {
+    } else if (diffDays > 2) {
       // Miss từ 2 ngày trở lên → reset về 1
       calculatedStreak = 1;
     }
@@ -4144,14 +4175,30 @@ function recalculateStreakFromDates() {
 
   const streak = StreakService.getStreakData();
   const lastDate = sorted[sorted.length - 1];
+  const todayStr = getTodayDateString();
+  const daysSinceLast = getDaysDifference(lastDate, todayStr);
 
-  // Chỉ cập nhật nếu calculated khác với stored (tránh ghi không cần thiết)
-  if (streak.current_streak !== calculatedStreak || streak.last_completed_date !== lastDate) {
-    streak.current_streak = calculatedStreak;
-    streak.longest_streak = Math.max(streak.longest_streak || 0, calculatedStreak);
+  // An toàn tuyệt đối:
+  // - Nếu daysSinceLast > 2 (đã bỏ học từ 2 ngày trở lên so với hôm nay): streak reset về 0
+  // - Nếu trong vòng 2 ngày (hôm nay hoặc hôm qua hoặc được grace period):
+  //   chọn giá trị LỚN NHẤT giữa streak đã lưu và calculatedStreak để KHÔNG bị hạ oan streak
+  //   nếu danh sách streak_dates chưa kịp đồng bộ đầy đủ các ngày trong quá khứ.
+  let newCurrentStreak;
+  if (daysSinceLast > 2) {
+    newCurrentStreak = 0;
+  } else {
+    newCurrentStreak = Math.max(streak.current_streak || 0, calculatedStreak);
+  }
+
+  const newLongestStreak = Math.max(streak.longest_streak || 0, newCurrentStreak, calculatedStreak);
+
+  // Chỉ cập nhật nếu có thay đổi
+  if (streak.current_streak !== newCurrentStreak || streak.longest_streak !== newLongestStreak || streak.last_completed_date !== lastDate) {
+    streak.current_streak = newCurrentStreak;
+    streak.longest_streak = newLongestStreak;
     streak.last_completed_date = lastDate;
     StreakService.saveStreakData(streak);
-    console.log(`Streak recalculated từ streak_dates: ${calculatedStreak} (was ${streak.current_streak})`);
+    console.log(`Streak recalculated từ streak_dates: current=${newCurrentStreak}, longest=${newLongestStreak}`);
     updateUserStatsDashboard();
   }
 }
