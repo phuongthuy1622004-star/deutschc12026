@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=54')
+    navigator.serviceWorker.register('./sw.js?v=55')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -1488,28 +1488,10 @@ function getTypeBadgeHTML(type) {
     bg = '#FCE7F3';
     color = '#BE185D';
   } else if (val.includes('das') || val.includes('neuter')) {
-    bg = '#F3F4F6';
-    color = '#4B5563';
+    bg = '#D1FAE5';
+    color = '#047857';
   }
   return `<span class="word-type-badge" style="display: inline-block; background: ${bg}; color: ${color}; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; margin: 4px auto 0 auto; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(0,0,0,0.05);">${type}</span>`;
-}
-
-// Lấy màu cho từ tiếng Đức theo giống danh từ (der: xanh dương đậm, die: hồng đậm, das: xám đậm)
-function getNounColor(word) {
-  if (!word) return 'var(--text-primary)';
-  const type = (word.type || '').toLowerCase();
-  const wordText = (word.word || word.id || '').trim().toLowerCase();
-  
-  if (type.includes('der') || type.includes('masculine') || wordText.startsWith('der ')) {
-    return '#1E40AF'; // Xanh dương đậm
-  }
-  if (type.includes('die') || type.includes('feminine') || wordText.startsWith('die ')) {
-    return '#BE185D'; // Hồng đậm
-  }
-  if (type.includes('das') || type.includes('neuter') || wordText.startsWith('das ')) {
-    return '#4B5563'; // Xám đậm (không phải màu đen)
-  }
-  return 'var(--text-primary)';
 }
 
 function formatCardMeanings(word) {
@@ -1579,13 +1561,12 @@ function renderPassiveCard() {
     imgContainer.innerHTML = '';
   }
   
-  // Type Badge & Word Color
+  // Type Badge
   const typeBadgeHTML = getTypeBadgeHTML(word.type);
-  const nounColor = getNounColor(word);
   
   document.getElementById('passive-word-de').innerHTML = `
     ${typeBadgeHTML}
-    <div style="font-size: 24px; font-weight: 800; color: ${nounColor}; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <div style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
       ${wordText} 
       <button class="audio-btn" onclick="speakFlashcardSequenceById('${word.id}')">🔊</button>
     </div>
@@ -1904,7 +1885,6 @@ function renderSwipeCardStack() {
     
     // Combined Meanings
     const meaningsHTML = formatCardMeanings(word);
-    const nounColor = getNounColor(word);
     
     cardEl.innerHTML = `
       <div class="swipe-indicator right">Remembered</div>
@@ -1914,7 +1894,7 @@ function renderSwipeCardStack() {
       <div class="word-sentence" style="min-height: 48px; margin-bottom: 14px; text-align: center;">${word.sentence || ''} ${word.sentence ? `<button class="audio-btn" data-sentence-audio="${(word.sentence || '').replace(/"/g, '&quot;')}">🔊</button>` : ''}</div>
       ${typeBadgeHTML}
       
-      <div class="word-display" style="margin-top: 4px; color: ${nounColor};">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
+      <div class="word-display" style="margin-top: 4px;">${wordText} <button class="audio-btn" data-audio="${wordText}">🔊</button></div>
       <div class="word-ipa">${ipaText}</div>
       ${imageHTML}
       
