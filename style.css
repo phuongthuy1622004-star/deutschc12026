@@ -544,6 +544,12 @@ h2 {
   gap: 8px;
 }
 
+#passive-sentence-de {
+  min-height: 48px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
 .word-meaning {
   font-size: 20px;
   font-weight: 700;
@@ -617,6 +623,7 @@ h2 {
   color: var(--primary);
   cursor: pointer;
   transition: transform 0.1s;
+  flex-shrink: 0;
 }
 
 .audio-btn:active {
