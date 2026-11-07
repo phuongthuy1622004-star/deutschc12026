@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=57')
+    navigator.serviceWorker.register('./sw.js?v=58')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -392,22 +392,31 @@ function updateStatsFromList(list) {
 // TOPIC STUDY ORDER MANAGEMENT (SẮP XẾP THỨ TỰ HỌC BỘ TỪ)
 // -------------------------------------------------------------
 function getDefaultTopicOrder() {
-  if (!state.allVocab) return [];
-  const uniqueTopics = [...new Set(state.allVocab.map(w => w.topic || 'General'))];
+  if (!state.allVocab || state.allVocab.length === 0) return [];
   
-  // Thứ tự tự nhiên của các cấp độ Goethe
-  const standardLevels = ['GOETHE A1', 'GOETHE A2', 'GOETHE B1', 'GOETHE B2', 'GOETHE C1', 'GOETHE C2'];
-  const sorted = [];
-  standardLevels.forEach(lvl => {
-    if (uniqueTopics.includes(lvl)) sorted.push(lvl);
+  // Tính minId cho mỗi topic dựa trên toàn bộ từ vựng thực tế trong DB
+  const topicMinMap = {};
+  state.allVocab.forEach(w => {
+    const t = w.topic || 'General';
+    const id = parseInt(w.id);
+    const validId = !isNaN(id) ? id : 999999;
+    if (topicMinMap[t] === undefined || validId < topicMinMap[t]) {
+      topicMinMap[t] = validId;
+    }
   });
-  uniqueTopics.forEach(t => {
-    if (!sorted.includes(t)) sorted.push(t);
-  });
-  return sorted;
+  
+  // Sắp xếp tự nhiên theo đúng thứ tự xuất hiện ID trong database:
+  // A1 (1) -> A1 Phần 2 (993) -> A2 (2065) -> A2 Phần 2 (3061) -> A2 Phần 3 (4059) -> B1 -> B2 -> C1 -> C2
+  return Object.keys(topicMinMap).sort((a, b) => topicMinMap[a] - topicMinMap[b]);
 }
 
 function getTopicStudyOrder() {
+  // Reset cache cũ nếu chưa có phiên bản v2
+  if (localStorage.getItem('topic_order_v') !== '2') {
+    localStorage.removeItem('topic_study_order');
+    localStorage.setItem('topic_order_v', '2');
+  }
+
   const local = localStorage.getItem('topic_study_order');
   let order = [];
   if (local) {
