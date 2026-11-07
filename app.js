@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=55')
+    navigator.serviceWorker.register('./sw.js?v=56')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -3805,22 +3805,34 @@ function loadStatsFromDB(callback) {
         localStorage.setItem('user_streak', JSON.stringify(val));
       }
       
-      // Load today's daily task
-      return state.db.ref(`daily_tasks/${todayStr}`).once('value');
-    }).then(taskSnap => {
-      const val = taskSnap.val();
-      if (val) {
-        localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(val));
-        
-        // Nếu task hôm nay đã hoàn thành, đảm bảo ngày hôm nay có trong streak_dates
-        if (val.is_completed || val.is_vocab_completed) {
-          let streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
-          if (!streakDates.includes(todayStr)) {
-            streakDates.push(todayStr);
-            streakDates.sort();
-            localStorage.setItem('streak_dates', JSON.stringify(streakDates));
+      // Load all daily tasks: tự động quét & tự chữa lành (Self-Healing)
+      // Đảm bảo BẤT KỲ ngày nào đã hoàn thành trong daily_tasks ĐỀU PHẢI có trong streak_dates, vĩnh viễn không bao giờ sót!
+      return state.db.ref('daily_tasks').once('value');
+    }).then(tasksSnap => {
+      const allTasks = tasksSnap.val() || {};
+      const todayTask = allTasks[todayStr];
+      if (todayTask) {
+        localStorage.setItem(`daily_task_${todayStr}`, JSON.stringify(todayTask));
+      }
+      
+      let streakDates = JSON.parse(localStorage.getItem('streak_dates')) || [];
+      let datesChanged = false;
+      
+      // Quét toàn bộ lịch sử daily_tasks: gom mọi ngày hoàn thành vào streak_dates
+      Object.keys(allTasks).forEach(dateKey => {
+        const t = allTasks[dateKey];
+        if (t && (t.is_completed || t.is_vocab_completed)) {
+          if (!streakDates.includes(dateKey)) {
+            streakDates.push(dateKey);
+            datesChanged = true;
           }
         }
+      });
+      
+      if (datesChanged) {
+        streakDates.sort();
+        localStorage.setItem('streak_dates', JSON.stringify(streakDates));
+        saveStatsToDB();
       }
       
       // Generate task if missing
@@ -4000,7 +4012,7 @@ const DailyTaskService = {
       task.completed_ids.push(strWordId);
       task.completed_cards = task.completed_ids.length;
       
-      if (task.completed_cards >= task.total_cards) {
+      if (task.completed_cards >= task.total_cards || (task.completed_ids && task.completed_ids.length >= task.total_cards)) {
         task.is_vocab_completed = true;
       }
       
