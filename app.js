@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=56')
+    navigator.serviceWorker.register('./sw.js?v=57')
       .then((reg) => {
         reg.update();
         console.log('Service Worker Registered & Updated');
@@ -388,11 +388,138 @@ function updateStatsFromList(list) {
   updateUserStatsDashboard();
 }
 
+// -------------------------------------------------------------
+// TOPIC STUDY ORDER MANAGEMENT (SẮP XẾP THỨ TỰ HỌC BỘ TỪ)
+// -------------------------------------------------------------
+function getDefaultTopicOrder() {
+  if (!state.allVocab) return [];
+  const uniqueTopics = [...new Set(state.allVocab.map(w => w.topic || 'General'))];
+  
+  // Thứ tự tự nhiên của các cấp độ Goethe
+  const standardLevels = ['GOETHE A1', 'GOETHE A2', 'GOETHE B1', 'GOETHE B2', 'GOETHE C1', 'GOETHE C2'];
+  const sorted = [];
+  standardLevels.forEach(lvl => {
+    if (uniqueTopics.includes(lvl)) sorted.push(lvl);
+  });
+  uniqueTopics.forEach(t => {
+    if (!sorted.includes(t)) sorted.push(t);
+  });
+  return sorted;
+}
+
+function getTopicStudyOrder() {
+  const local = localStorage.getItem('topic_study_order');
+  let order = [];
+  if (local) {
+    try {
+      order = JSON.parse(local);
+    } catch (e) {
+      order = [];
+    }
+  }
+  
+  const defaultOrder = getDefaultTopicOrder();
+  if (!order || !Array.isArray(order) || order.length === 0) {
+    return defaultOrder;
+  }
+  
+  // Nếu có bộ từ mới (như Extra B1) nạp vào mà chưa có trong order thì tự động thêm vào cuối
+  defaultOrder.forEach(t => {
+    if (!order.includes(t)) {
+      order.push(t);
+    }
+  });
+  
+  return order;
+}
+
+function saveTopicStudyOrder(orderArray) {
+  if (!orderArray || !Array.isArray(orderArray)) return;
+  localStorage.setItem('topic_study_order', JSON.stringify(orderArray));
+  
+  // Đồng bộ lên Firebase user_settings
+  if (state.isFirebaseInitialized && state.db) {
+    state.db.ref('user_settings/topic_study_order').set(orderArray)
+      .then(() => console.log('Saved topic study order to Firebase'))
+      .catch(err => console.error('Firebase save topic study order error:', err));
+  }
+}
+
+// Biến lưu trạng thái tạm thời khi người dùng bấm Lên/Xuống trong Modal
+let tempTopicOrder = [];
+
+function openTopicOrderModal() {
+  tempTopicOrder = [...getTopicStudyOrder()];
+  renderTopicOrderList();
+  openModal('topic-order-modal');
+}
+
+function renderTopicOrderList() {
+  const container = document.getElementById('topic-order-list');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  tempTopicOrder.forEach((topicName, index) => {
+    const wordsInTopic = (state.allVocab || []).filter(w => (w.topic || 'General') === topicName);
+    const totalWords = wordsInTopic.length;
+    const newWordsCount = wordsInTopic.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW').length;
+    
+    const isFirst = (index === 0);
+    const isLast = (index === tempTopicOrder.length - 1);
+    
+    const itemEl = document.createElement('div');
+    itemEl.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px 14px; gap: 12px;';
+    
+    itemEl.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+        <span style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #E0E7FF; color: #4338CA; font-size: 11px; font-weight: 800; flex-shrink: 0;">${index + 1}</span>
+        <div style="min-width: 0;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${topicName}</div>
+          <div style="font-size: 10px; color: var(--text-secondary); margin-top: 1px;">
+            <span style="color: ${newWordsCount > 0 ? '#D97706' : '#059669'}; font-weight: 600;">${newWordsCount} new</span> • ${totalWords} total
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; flex-shrink: 0;">
+        <button type="button" class="order-move-btn" data-action="up" data-index="${index}" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid #CBD5E1; background: white; cursor: ${isFirst ? 'not-allowed' : 'pointer'}; opacity: ${isFirst ? '0.35' : '1'}; display: flex; align-items: center; justify-content: center; font-size: 12px;" ${isFirst ? 'disabled' : ''}>⬆️</button>
+        <button type="button" class="order-move-btn" data-action="down" data-index="${index}" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid #CBD5E1; background: white; cursor: ${isLast ? 'not-allowed' : 'pointer'}; opacity: ${isLast ? '0.35' : '1'}; display: flex; align-items: center; justify-content: center; font-size: 12px;" ${isLast ? 'disabled' : ''}>⬇️</button>
+      </div>
+    `;
+    
+    container.appendChild(itemEl);
+  });
+  
+  // Sự kiện di chuyển Lên / Xuống
+  container.querySelectorAll('.order-move-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-index'));
+      const action = btn.getAttribute('data-action');
+      if (action === 'up' && idx > 0) {
+        const temp = tempTopicOrder[idx];
+        tempTopicOrder[idx] = tempTopicOrder[idx - 1];
+        tempTopicOrder[idx - 1] = temp;
+        renderTopicOrderList();
+      } else if (action === 'down' && idx < tempTopicOrder.length - 1) {
+        const temp = tempTopicOrder[idx];
+        tempTopicOrder[idx] = tempTopicOrder[idx + 1];
+        tempTopicOrder[idx + 1] = temp;
+        renderTopicOrderList();
+      }
+    });
+  });
+}
+
 // RENDER TOPICS LIST DYNAMICALLY
 function renderTopics() {
   if (!state.allVocab) return;
   
-  const uniqueTopics = [...new Set(state.allVocab.map(item => item.topic || 'General'))];
+  const topicOrder = getTopicStudyOrder();
+  const allUnique = [...new Set(state.allVocab.map(item => item.topic || 'General'))];
+  const uniqueTopics = [...allUnique].sort((a, b) => {
+    const idxA = topicOrder.indexOf(a);
+    const idxB = topicOrder.indexOf(b);
+    return (idxA !== -1 ? idxA : 9999) - (idxB !== -1 ? idxB : 9999);
+  });
   
   const emojiMap = {
     'Family': '👪',
@@ -802,6 +929,33 @@ function setupEventListeners() {
         return;
       }
       startDailyTaskSwipeStudy();
+    });
+  }
+
+  // Click on Study Order button opens Topic Study Order Modal
+  const topicOrderBtn = document.getElementById('btn-open-topic-order');
+  if (topicOrderBtn) {
+    topicOrderBtn.addEventListener('click', () => {
+      openTopicOrderModal();
+    });
+  }
+
+  // Topic Order Modal buttons
+  const resetTopicOrderBtn = document.getElementById('btn-reset-topic-order');
+  if (resetTopicOrderBtn) {
+    resetTopicOrderBtn.addEventListener('click', () => {
+      tempTopicOrder = getDefaultTopicOrder();
+      renderTopicOrderList();
+    });
+  }
+
+  const saveTopicOrderBtn = document.getElementById('btn-save-topic-order');
+  if (saveTopicOrderBtn) {
+    saveTopicOrderBtn.addEventListener('click', () => {
+      saveTopicStudyOrder(tempTopicOrder);
+      renderTopics();
+      closeModal('topic-order-modal');
+      alert('Đã lưu thứ tự học bộ từ thành công!');
     });
   }
 }
@@ -3835,6 +3989,15 @@ function loadStatsFromDB(callback) {
         saveStatsToDB();
       }
       
+      // Load topic_study_order from Firebase
+      state.db.ref('user_settings/topic_study_order').once('value').then(orderSnap => {
+        const remoteOrder = orderSnap.val();
+        if (remoteOrder && Array.isArray(remoteOrder) && remoteOrder.length > 0) {
+          localStorage.setItem('topic_study_order', JSON.stringify(remoteOrder));
+          renderTopics();
+        }
+      }).catch(err => console.error('Firebase load topic study order error:', err));
+      
       // Generate task if missing
       DailyTaskService.generateTodayTask(state.allVocab);
       updateDailyTaskUI();
@@ -3943,9 +4106,21 @@ const DailyTaskService = {
     let task = this.getTodayTask();
     if (task) return task; // Already exists
     
-    // Group 1: Max 28 NEW words (sorted by numeric/alphabetical ID to follow sequence)
+    // Group 1: Max 28 NEW words (sorted by topic study order, then numeric/alphabetical ID)
+    const topicOrder = getTopicStudyOrder();
     const newWords = allVocab.filter(w => !w.status || w.status === 'unlearned' || w.status === 'new' || w.status === 'NEW')
                              .sort((a, b) => {
+                               const topicA = a.topic || 'General';
+                               const topicB = b.topic || 'General';
+                               const idxA = topicOrder.indexOf(topicA);
+                               const idxB = topicOrder.indexOf(topicB);
+                               const posA = idxA !== -1 ? idxA : 9999;
+                               const posB = idxB !== -1 ? idxB : 9999;
+                               
+                               if (posA !== posB) {
+                                 return posA - posB;
+                               }
+                               
                                const numA = parseInt(a.id);
                                const numB = parseInt(b.id);
                                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;

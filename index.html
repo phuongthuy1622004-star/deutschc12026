@@ -37,7 +37,7 @@
   </script>
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=56">
+  <link rel="stylesheet" href="style.css?v=57">
   
   <!-- Firebase SDK Compat via CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -181,13 +181,18 @@
         
         <!-- Decks Section (Hidden during active search) -->
         <div id="decks-section">
-          <h2>Study Decks</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h2 style="margin: 0;">Study Decks</h2>
+            <button id="btn-open-topic-order" type="button" style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; background: #F1F5F9; border: 1px solid #CBD5E1; color: #334155; padding: 5px 12px; border-radius: 20px; cursor: pointer;">
+              <span>🔀</span> Study Order
+            </button>
+          </div>
           <!-- Topics list -->
           <div class="topics-grid" id="topics-grid">
             <!-- Rendered dynamically in app.js -->
           </div>
         </div>
-        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v56</div>
+        <div style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 30px; opacity: 0.5; padding-bottom: 20px;">App Version: v57</div>
       </div>
     </section>
       
@@ -809,10 +814,30 @@
         </div>
       </div>
     </div>
+
+    <!-- 6. Topic Study Order Modal -->
+    <div class="modal-overlay" id="topic-order-modal" style="align-items: center;">
+      <div class="modal-content" style="max-width: 440px; width: 92%; border-radius: var(--border-radius-lg); padding: 20px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header" style="margin-bottom: 8px;">
+          <span class="modal-title" style="display: flex; align-items: center; gap: 6px;">🔀 Thứ Tự Học Bộ Từ</span>
+          <button class="back-btn" onclick="closeModal('topic-order-modal')">✕</button>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.4;">
+          Sắp xếp thứ tự ưu tiên học từ mới. Hệ thống sẽ học hết từ mới của bộ ở trên rồi mới chuyển sang bộ tiếp theo.
+        </p>
+        <div id="topic-order-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; min-height: 180px;">
+          <!-- Rendered dynamically in app.js -->
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+          <button id="btn-reset-topic-order" class="btn-secondary" type="button" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 12px; border: 1px solid #CBD5E1; background: #F8FAFC; cursor: pointer;">Default</button>
+          <button id="btn-save-topic-order" class="btn-primary" type="button" style="flex: 2; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 12px; background: var(--primary); color: white; border: none; cursor: pointer;">Save Order</button>
+        </div>
+      </div>
+    </div>
     
   </div>
 
   <!-- Scripts -->
-  <script src="app.js?v=56"></script>
+  <script src="app.js?v=57"></script>
 </body>
 </html>
