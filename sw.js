@@ -1,10 +1,10 @@
 // CACHE VERSION — bump this every deployment to force iOS PWA to reload fresh files
-const CACHE_NAME = 'deutsch-c1-cache-v58';
+const CACHE_NAME = 'deutsch-c1-cache-v59';
 const ASSETS = [
   './',
   './index.html',
-  './style.css?v=58',
-  './app.js?v=58',
+  './style.css?v=59',
+  './app.js?v=59',
   './manifest.json',
   './icon.png'
 ];
